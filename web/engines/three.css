@@ -1,0 +1,4 @@
+body{margin:0;overflow:hidden;background:black}
+canvas{width:100%;height:100%;}
+.fps{position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;}
+.fps canvas{width: 80px; height: 48px; display: block;}
