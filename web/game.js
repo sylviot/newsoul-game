@@ -5,17 +5,56 @@ var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.set(0,0,400);
+camera.position.set(0,0,700);
 
 document.body.appendChild(stats.dom);
 document.body.appendChild(renderer.domElement);
+
 window.addEventListener('mousewheel', function(e){
     if(e.isTrusted){
-      camera.position.z = Math.max(350, Math.min(500, camera.position.z+e.deltaY*0.1));
+      camera.position.z = Math.max(500, Math.min(650, camera.position.z+e.deltaY*0.5));
     }
 });
+window.addEventListener('mousedown', function(e){
+  var x = (e.clientX-window.innerWidth/2), y = -(e.clientY-window.innerHeight/2);
+
+  console.log(x, y)
+});
+
+function Tile(name, position) {
+  this.texture = new THREE.ImageUtils.loadTexture(`assets/${name}.png`);
+  this.material = new THREE.MeshBasicMaterial({map: this.texture});
+  this.geometry = new THREE.PlaneGeometry(90, 32, 1, 1);
+  this.mesh = new THREE.Mesh(this.geometry, this.material);
+  this.mesh.position.set(position.x, position.y, 0);
+
+  return this;
+}
+
+function Animated(name, frames, velocity, size, position){
+  this.texture = new THREE.ImageUtils.loadTexture(`assets/${name}.png`);
+  this.animation = new TextureAnimator(this.texture, frames, 1, frames, velocity);
+  this.material = new THREE.MeshBasicMaterial({map: this.texture, transparent: true, opacity: 1.0});
+  this.geometry = new THREE.PlaneGeometry(size.w, size.h, 1, 1);
+  this.mesh = new THREE.Mesh(this.geometry, this.material);
+  this.mesh.position.set(position.x, position.y, 0);
+
+  return this;
+}
+
+function Player(name, position) {
+  this.texture = new THREE.ImageUtils.loadTexture('assets/run.png');
+  this.animation = new TextureAnimator(this.texture, 4, 1, 4, 105);
+  this.material = new THREE.MeshBasicMaterial({map: this.texture, side: THREE.DoubleSide});
+  this.geometry = new THREE.PlaneGeometry(50, 50, 1, 1);
+  this.mesh = new THREE.Mesh(this.geometry, this.material);
+  this.mesh.position.set(position.x, position.y, 0);
+
+  return this;
+}
 
 /* SAMPLE */
+var players =[];
 function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) {	
   // note: texture passed by reference, will be updated by the update function.
           
@@ -55,22 +94,15 @@ function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDurat
 }		
 
 /* SAMPLE ANIMATION */
-var runner2Texture = new THREE.ImageUtils.loadTexture('assets/run.png');
-var runner2Animation = new TextureAnimator(runner2Texture, 4, 1, 4, 105);
-var runner2Material = new THREE.MeshBasicMaterial({map: runner2Texture, side: THREE.DoubleSide});
-var runner2Geometry = new THREE.PlaneGeometry(50, 50, 1, 1);
-var runner2 = new THREE.Mesh(runner2Geometry, runner2Material);
-runner2.position.set(100, 0, 0);
-scene.add(runner2);
+for(var i=-7;i<7;i++){
+  var tile = new Tile('tile_1_1', {x:i*90,y:-280});
+  scene.add(tile.mesh);
+}
 
-var runnerTexture = new THREE.ImageUtils.loadTexture('assets/run.png');
-var runnerAnimation = new TextureAnimator(runnerTexture, 4, 1, 4, 105);
-var runnerMaterial = new THREE.MeshBasicMaterial({map: runnerTexture, side: THREE.DoubleSide});
-var runnerGeometry = new THREE.PlaneGeometry(50, 50, 1, 1);
-var runner = new THREE.Mesh(runnerGeometry, runnerMaterial);
-runner.position.set(0, 0, 0);
-scene.add(runner);
-
+var portal = new Animated('portal', 14, 50, {w:90,h:107}, {x:-400,y:-216})
+var portal2 = new Animated('portal_2', 7, 50, {w:128,h:122}, {x:400,y:-218})
+scene.add(portal.mesh)
+scene.add(portal2.mesh)
 
 function animate(){
   requestAnimationFrame(animate);
@@ -80,8 +112,9 @@ function animate(){
 
 function update(){
   var delta = clock.getDelta();
-  runnerAnimation.update(1000 * delta);
-  runner2Animation.update(1000 * delta);
+  for(var i=0;i< players.length;i++) players[i].animation.update(1000*delta);
+  portal.animation.update(1000*delta);
+  portal2.animation.update(1000*delta);
 
   stats.update();
 }
