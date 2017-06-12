@@ -1,4 +1,5 @@
 var stats = new Stats();
+var clock = new THREE.Clock();
 var renderer = new THREE.WebGLRenderer({antialias: true});
 
 renderer.setClearColor(0xFFFFFF, 1);
@@ -8,11 +9,9 @@ document.body.appendChild(stats.dom);
 document.body.appendChild(renderer.domElement);
 
 var sceneManager = new SceneManager({renderer: renderer});
-sceneManager.change(Info)
-//setInterval(function(){  sceneManager.next(); console.log('Timeout 1000ms') }, 1000);
 
 function SceneManager(game) {
-  this.scenes = [Loading, Game];
+  this.scenes = [Initialize, Splash];
   this.scenesIndex= 0;
 
   this.initialize = function() {
@@ -31,58 +30,125 @@ function SceneManager(game) {
   this.initialize();
 }
 
-function Info(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+function Splash(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
   this.scene = new THREE.Scene();
 
+  this.camera.position.set(0, 0, 100);
+  game.renderer.setClearColor(0x0F0, 1);
+  game.renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var t = new THREE.MeshBasicMaterial({map: new THREE.ImageUtils.loadTexture('assets/run.png')});
+  var g = new THREE.PlaneGeometry(259, 79, 1, 1);
+  var m = new THREE.Mesh(g, t);
+  m.position.set(0, 0, 0);
+  this.scene.add(m);
+}
+
+function Initialize(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(60, window.devicePixelRatio, 0.1, 2000);
+  this.scene = new THREE.Scene();
+
+  this.camera.position.set(0, 0, 700);
   game.renderer.setClearColor(0x000, 1);
   game.renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // ToDo - Precisa da lista de arquivos para download...
+  var data = [
+    { filename: 'assets/run.png',       type: 'image'},
+    { filename: 'assets/tile_1_1.png',  type: 'image'},
+    { filename: 'assets/tile_1_2.png',  type: 'image'},
+    { filename: 'assets/tile_1_3.png',  type: 'image'},
+    { filename: 'assets/tile_2_1.png',  type: 'image'},
+    { filename: 'assets/tile_2_2.png',  type: 'image'},
+  ];
+
+
+  // ToDo - criar um gerador de texto
+  var text_1 = document.createElement('h1');
+  text_1.style.position = 'fixed';
+  text_1.style.color = 'white';
+  text_1.style.bottom = '10%';
+  text_1.style.width = '100%';
+  text_1.style.textAlign = 'center';
+  text_1.innerHTML = 'Carregando...';
 
   var text = document.createElement('h1');
   text.style.position = 'fixed';
-  text.style.width = '100%';
-  text.style.top = '30%';
   text.style.color = 'white';
+  text.style.bottom = '5%';
+  text.style.width = '100%';
+  text.style.fontSize = '12px';
   text.style.textAlign = 'center';
 
-  text.innerHTML= 'NEW SOUL <br><br> 1º Open Server - Dia 02 de Julho de 2017';
+  // ToDo - Criar um progress bar
+  var progress = document.createElement('div');
+  progress.style.position = 'fixed';
+  progress.style.height = '20px';
+  progress.style.bottom = '10%';
+  progress.style.width = '40%';
+  progress.style.margin = '0 30%';
+  progress.style.backgroundColor = '#444';
+  progress.style.border = '1px solid white';
+
+  var progress_bar = document.createElement('div');
+  progress_bar.style.height = '100%';
+  progress_bar.style.backgroundColor = 'red';
+  progress_bar.style.width = '0%';
+  progress.appendChild(progress_bar);
+
+  document.body.appendChild(text_1);
   document.body.appendChild(text);
-}
+  document.body.appendChild(progress);
 
-function Game(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-  this.clock = new THREE.Clock();
-  this.scene = new THREE.Scene();
+  function UI_ChangeFilenameRequest(filename) {
+    text.innerHTML = filename;
+    console.log('UI change_FileName: ' + filename);
+  }
 
-  this.camera.position.set(0, 0, 700);
-  game.renderer.setClearColor(0x000, 1);
-  game.renderer.setSize(window.innerWidth, window.innerHeight);
+  function UI_ChangeProgress(p) {
+    progress_bar.style.width = p+'%';
+  }
 
-  var texture = new THREE.ImageUtils.loadTexture('assets/tile_2_2.png'),
-      material = new THREE.MeshBasicMaterial({map: texture}),
-      geometry = new THREE.PlaneGeometry(90, 32, 1, 1),
-      mesh = new THREE.Mesh(geometry, material);
+  function LoaderFiles(files) {
+    var queue_files = files.slice(),
+        queue_current;
 
-  mesh.position.set(-90, -280, 0);
-  this.scene.add(mesh);
-}
+    var queue_finish = function() {
+      sceneManager.next();
+    },
+    queue_next = function() {
+      queue_current = queue_files.shift(); 
 
-function Loading(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-  this.clock = new THREE.Clock();
-  this.scene = new THREE.Scene();
+      if(!queue_current) { queue_finish(); return; }
 
-  this.camera.position.set(0, 0, 700);
-  game.renderer.setClearColor(0xa3e0ed, 1);
-  game.renderer.setSize(window.innerWidth, window.innerHeight);
+      setTimeout(function() {queue_request(queue_current.filename, queue_current.type); },100);
+    },
+    queue_downloading = function(xhr) {
+      console.log( (xhr.loaded / xhr.total * 100) + '% percents.' );
+    },
+    queue_fail = function(xhr) {
+      console.log('fail');
+    },
+    queue_request = function(filename, type) {
+      THREE.Cache.enabled = true;
+      var loader;
 
-  var texture = new THREE.ImageUtils.loadTexture('assets/tile_1_1.png'),
-      material = new THREE.MeshBasicMaterial({map: texture}),
-      geometry = new THREE.PlaneGeometry(90, 32, 1, 1),
-      mesh = new THREE.Mesh(geometry, material);
+      if(type == 'image') 
+        loader = new THREE.ImageLoader();
+      else 
+        loader = new THREE.FileLoader();
 
-  mesh.position.set(-90, -280, 0);
-  this.scene.add(mesh);
+      UI_ChangeFilenameRequest(filename);
+      UI_ChangeProgress(parseInt((files.length - queue_files.length) / files.length * 100) );
+
+      loader.load(filename, queue_next, queue_downloading, queue_fail);
+    }
+
+    queue_next();
+  }
+
+  LoaderFiles(data);
 }
 
 function animate(){
@@ -93,7 +159,6 @@ function animate(){
 
 
 function update(){
-  var delta = sceneManager.current.clock.getDelta();
   stats.update();
 }
 
