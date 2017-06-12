@@ -8,7 +8,8 @@ document.body.appendChild(stats.dom);
 document.body.appendChild(renderer.domElement);
 
 var sceneManager = new SceneManager({renderer: renderer});
-setInterval(function(){  sceneManager.next(); console.log('Timeout 1000ms') }, 1000);
+sceneManager.change(Info)
+//setInterval(function(){  sceneManager.next(); console.log('Timeout 1000ms') }, 1000);
 
 function SceneManager(game) {
   this.scenes = [Loading, Game];
@@ -28,6 +29,24 @@ function SceneManager(game) {
   }
 
   this.initialize();
+}
+
+function Info(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+  this.scene = new THREE.Scene();
+
+  game.renderer.setClearColor(0x000, 1);
+  game.renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var text = document.createElement('h1');
+  text.style.position = 'fixed';
+  text.style.width = '100%';
+  text.style.top = '30%';
+  text.style.color = 'white';
+  text.style.textAlign = 'center';
+
+  text.innerHTML= 'NEW SOUL <br><br> 1º Open Server - Dia 02 de Julho de 2017';
+  document.body.appendChild(text);
 }
 
 function Game(sceneManager, game) {
