@@ -24,7 +24,10 @@ function SceneManager(game) {
   }
     
   this.change = function(scene) {
+    if(this.current) this.current.down();
+
     this.current =  new scene(this, {'renderer': game.renderer});
+    this.current.up();
   }
 
   this.initialize();
@@ -38,11 +41,13 @@ function Splash(sceneManager, game) {
   game.renderer.setClearColor(0x0F0, 1);
   game.renderer.setSize(window.innerWidth, window.innerHeight);
 
-  var t = new THREE.MeshBasicMaterial({map: new THREE.ImageUtils.loadTexture('assets/run.png')});
-  var g = new THREE.PlaneGeometry(259, 79, 1, 1);
-  var m = new THREE.Mesh(g, t);
-  m.position.set(0, 0, 0);
-  this.scene.add(m);
+  this.up = function() {
+
+  }
+
+  this.down = function() {
+
+  }
 }
 
 function Initialize(sceneManager, game) {
@@ -148,7 +153,15 @@ function Initialize(sceneManager, game) {
     queue_next();
   }
 
-  LoaderFiles(data);
+  this.up = function() {
+    LoaderFiles(data);
+  }
+
+  this.down = function() {
+    text.remove();
+    text_1.remove();
+    progress.remove();
+  }
 }
 
 function animate(){
