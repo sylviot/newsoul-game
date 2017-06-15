@@ -11,6 +11,8 @@ defmodule Game do
       [{:port, define_port()}],
       [{:env, [{:dispatch, args}] }]
     )
+
+    Game.Server.start_link
   end
 
   def stop(_reason) do

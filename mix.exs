@@ -18,6 +18,9 @@ defmodule Game.Mixfile do
   end
 
   defp deps do
-    [{:cowboy, "~> 1.0.0"}]
+    [
+      {:cowboy, "~> 1.0.0"},
+      {:json,   "~> 1.0.0"},
+    ]
   end
 end
