@@ -11,10 +11,11 @@ document.body.appendChild(renderer.domElement);
 // Basic itens
 var BASIC_CAMERA = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
 
-var sceneManager = new SceneManager({renderer: renderer});
+var network = new Network();
+var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
 
 function SceneManager(game) {
-  this.scenes = [Initialize, Splash, Login];
+  this.scenes = [Initialize, Splash, Login, Game];
   this.scenesIndex= 0;
 
   this.initialize = function() {
@@ -29,11 +30,107 @@ function SceneManager(game) {
   this.change = function(scene) {
     if(this.current) this.current.down();
 
-    this.current =  new scene(this, {'renderer': game.renderer});
+    this.current =  new scene(this, game);
     this.current.up();
   }
 
   this.initialize();
+}
+
+/* NETWORK */
+
+function Network() {
+  var URL = CreateURL(), 
+      websocket,
+      callback_open,
+      callback_message,
+      callback_close;
+
+  function CreateURL() {
+    return 'ws://' + window.location.host + '/ws';
+  }
+
+  this.connect = function() {
+    if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
+      console.log('Connecting...')
+      websocket = new WebSocket(URL);
+      websocket.onopen = function(e){console.log('connected!!!')};//callback_open;
+      websocket.onmessage = callback_message;
+    }
+  }
+
+  this.setCallback = function(onopen, onmessage, onclose) {
+    websocket.onopen = onopen;
+    websocket.onmessage = onmessage;
+    websocket.onclose = onclose; 
+  }
+
+  this.state = function() {
+    if(!websocket || !(websocket instanceof WebSocket)) {
+      return null;
+    }
+
+    return websocket.readyState;
+  }
+
+  this.send = function(data) {
+    if(!websocket || !(websocket instanceof WebSocket)) {
+      return;
+    }
+      
+    console.log('Sending...')
+    websocket.send(data);
+  }
+}
+
+
+/* SCENE */
+
+function Player(name) {
+  var texture = new THREE.ImageUtils.loadTexture('resources/player.png'),
+      material = new THREE.MeshBasicMaterial({map: texture}),
+      geometry = new THREE.PlaneGeometry(32, 32),
+      mesh = new THREE.Mesh(geometry, material);
+
+  mesh.position.set(0, 0, -100);
+
+  return mesh;
+}
+
+function Game(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+  this.scene = new THREE.Scene();
+
+  this.camera.position.set(0, 0, 100);
+  game.renderer.setClearColor(0x000, 1);
+
+  this.players = [];
+  this.player = new Player('sylviot');
+
+  game.network.setCallback(null, onMessage, null);
+  /*
+  setInterval(function() {
+    game.network.send(JSON.stringify({action: "join", nickname: 'eu', message: 'oi oi'}))
+  }, 10000);
+  */
+  function onMessage(e) {
+    var data = JSON.parse(e.data);
+    alert();
+
+    console.log(data)
+
+  };
+
+  this.scene.add(this.player);
+
+  this.up = function() {
+  }
+
+  this.down = function() { }
+
+  this.update = function() {
+
+  }
 }
 
 function Login(sceneManager, game) {
@@ -49,6 +146,7 @@ function Login(sceneManager, game) {
       return;
     }
 
+    game.network.send('Login');
     sceneManager.next();
   }
 
@@ -95,8 +193,8 @@ function Login(sceneManager, game) {
   }
 
   this.up = function() {
+    game.network.connect();
     CreateForm();
-
   }
 
   this.down = function() {
@@ -104,6 +202,8 @@ function Login(sceneManager, game) {
     login_text.remove();
     login_button.remove();
   }
+ 
+  this.update = function(){}
 }
 
 function Splash(sceneManager, game) {
@@ -117,9 +217,9 @@ function Splash(sceneManager, game) {
     setTimeout(function(){ sceneManager.next(); }, 300);
   }
 
-  this.down = function() {
+  this.down = function() {}
 
-  }
+  this.update = function(){}
 }
 
 function Initialize(sceneManager, game) {
@@ -132,12 +232,7 @@ function Initialize(sceneManager, game) {
 
   // ToDo - Precisa da lista de arquivos para download...
   var data = [
-    { filename: 'assets/run.png',       type: 'image'},
-    { filename: 'assets/tile_1_1.png',  type: 'image'},
-    { filename: 'assets/tile_1_2.png',  type: 'image'},
-    { filename: 'assets/tile_1_3.png',  type: 'image'},
-    { filename: 'assets/tile_2_1.png',  type: 'image'},
-    { filename: 'assets/tile_2_2.png',  type: 'image'},
+    { filename: 'resources/player.png',       type: 'image'},
   ];
 
 
@@ -234,6 +329,8 @@ function Initialize(sceneManager, game) {
     text_1.remove();
     progress.remove();
   }
+
+  this.update = function(){}
 }
 
 function animate(){
@@ -245,6 +342,7 @@ function animate(){
 
 function update(){
   stats.update();
+  sceneManager.current.update();
 }
 
 function render(){
