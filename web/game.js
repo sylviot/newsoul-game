@@ -15,7 +15,7 @@ var network = new Network();
 var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
 
 function SceneManager(game) {
-  this.scenes = [Initialize, Splash, Login, Game];
+  this.scenes = [Initialize, Splash, /*Login,*/ Game];
   this.scenesIndex= 0;
 
   this.initialize = function() {
@@ -78,7 +78,6 @@ function Network() {
       return;
     }
       
-    console.log('Sending...')
     websocket.send(data);
   }
 }
@@ -94,6 +93,24 @@ function Player(name) {
 
   mesh.position.set(0, 0, -100);
 
+  mesh.moveX = function(side){
+    if(side == -1) mesh.position.x--;
+    if(side == 1) mesh.position.x++;
+  }
+  mesh.moveY = function(side){
+    if(side == -1) mesh.position.y--;
+    if(side == 1) mesh.position.y++;
+  }
+  mesh.moveTo = function(x, y){
+    console.log("move to:", x, y)
+    mesh.position.x = x;
+    mesh.position.y = y;
+  }
+
+  mesh.getName = function() {
+    return name;
+  }
+
   return mesh;
 }
 
@@ -104,31 +121,66 @@ function Game(sceneManager, game) {
   this.camera.position.set(0, 0, 100);
   game.renderer.setClearColor(0x000, 1);
 
+  var that = this;
   this.players = [];
-  this.player = new Player('sylviot');
+  this.player = new Player( 'player_' + (~~(Math.random()*99999)) );
 
-  game.network.setCallback(null, onMessage, null);
-  /*
-  setInterval(function() {
-    game.network.send(JSON.stringify({action: "join", nickname: 'eu', message: 'oi oi'}))
-  }, 10000);
-  */
+  game.network.connect();
+
+  game.network.setCallback(onConnected, onMessage, null);
+
+  function onConnected(){
+    console.log("Join: " + that.player.getName())
+    game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
+  }
+
   function onMessage(e) {
     var data = JSON.parse(e.data);
-    alert();
+    
+    if(data.nickname != that.player.getName() && !that.players[data.nickname]) {
+      that.players[data.nickname] = new Player(data.nickname);
+      that.scene.add(that.players[data.nickname]);
+    }
 
-    console.log(data)
+    if(data.action == 'talk' && data.nickname != that.player.getName()) {
+      that.players[data.nickname].moveTo(data.content.positionX, data.content.positionY);
+    }
 
+    if(data.action == 'leave' && that.players[data.nickname]) {
+      that.scene.remove(that.players[data.nickname]);
+      delete that.players[data.nickname];
+    }
   };
 
   this.scene.add(this.player);
 
-  this.up = function() {
+  window.addEventListener('keydown', onKeydown, false);
+
+  function onKeydown(e) {
+    var key = e.keyCode;
+
+    /* A */if(key == 65) that.player.moveX(-1);
+    /* D */if(key == 68) that.player.moveX(1);
+    /* S */if(key == 83) that.player.moveY(-1);
+    /* W */if(key == 87) that.player.moveY(1);
   }
+
+  this.up = function() { }
 
   this.down = function() { }
 
+  this.timeToUpdate = 0.5;
+  this.timeElapsed = 0;
+
   this.update = function() {
+    that.timeElapsed+=clock.getDelta();
+
+    if(that.timeElapsed > that.timeToUpdate) {
+      game.network.send(JSON.stringify({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} }));
+      that.timeElapsed = 0;
+    }
+
+
 
   }
 }
@@ -275,7 +327,6 @@ function Initialize(sceneManager, game) {
 
   function UI_ChangeFilenameRequest(filename) {
     text.innerHTML = filename;
-    console.log('UI change_FileName: ' + filename);
   }
 
   function UI_ChangeProgress(p) {

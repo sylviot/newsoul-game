@@ -1,6 +1,6 @@
 defmodule Game.Socket do
   @behaivor :cowboy_websocket
-  @timeout 60000
+  @timeout 600000
 
   def init(_, request, options) do
     {:upgrade, :protocol, :cowboy_websocket}
@@ -11,8 +11,15 @@ defmodule Game.Socket do
     {:ok, request, [], @timeout}
   end
 
-  def websocket_terminate(_reason, _request, _state) do
+  def websocket_terminate(_reason, _request, state) do
     IO.puts "Disconnected!"
+    {:nickname, nickname} = List.keyfind(state, :nickname, 0) 
+
+    leave_info = [action: "leave", nickname: nickname]
+
+    :gen_server.call(:game_server, {:leave, :nickname})
+    :gen_server.call(:game_server, {:talk, leave_info})
+
     :ok
   end
 
