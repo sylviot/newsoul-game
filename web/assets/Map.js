@@ -1,16 +1,21 @@
 function Map(id) {
   var that = this;
+  var map_id = id;
+
   this.materials = [];
   this.group = new THREE.Group();
   
-  var map_id = id;
+  this.player = null;
+  this.enemies = [];
+  this.backgrounds = [];
+  this.npcs = [];
 
   this.load = function() {
     console.log("map load")
     var data = {
       'name': "Mapa 01",
-      'width': 100,
-      'height': 30,
+      'width': 700,
+      'height': 200,
       'collisions': [],
       'materials': [{
         'id': 'tile_0',
@@ -43,8 +48,8 @@ function Map(id) {
         { 'x': 315, 'y': 70, 'material': 'tile_0' },
       ],
       'backgrounds': [
-        {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -2},
-        {'id': "bg_1", 'sprite': "bg_1.png", 'width': 700, 'height': 200, 'z': -1},
+        {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
+        {'id': "bg_1", 'sprite': "bg_1.png", 'width': 700, 'height': 200, 'z': -2},
       ],
       'npcs': [],
     }
@@ -52,7 +57,11 @@ function Map(id) {
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
   }
 
-  this.addPlayer = function(player) {}
+  this.addPlayer = function(player) {
+    that.player = player;
+
+    that.group.add(player);
+  }
   this.addEnemy = function(enemy) {}
   this.addNPC = function(NPC) {}
   this.addBackground = function(background) {
@@ -65,12 +74,14 @@ function Map(id) {
     that.group.add(mesh); 
   }
 
+  this.addTeleport = function() {}
+
   this.addTile = function(tile) {
       var texture = that.materials[tile.material],
           material  = new THREE.MeshBasicMaterial({map: texture}),
           mesh = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), material);
 
-      mesh.position.set(tile.x, tile.y, 0);
+      mesh.position.set(tile.x, tile.y, -1);
 
       that.group.add(mesh);
   }
