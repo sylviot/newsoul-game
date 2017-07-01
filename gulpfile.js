@@ -8,12 +8,13 @@ var gulp = require('gulp'),
 var files = [
   './web/assets/Enemy.js', './web/assets/Map.js', './web/assets/NPC.js', './web/assets/Player.js',
   './web/assets/Scenes/*.js',
-  './web/assets/Game.js'
 ];
 
 gulp.task('prod', function(){
-  return gulp.src(files)
-  .pipe(uglify())
+  var filesProduction = files;
+  filesProduction.push('./web/assets/Game.js');
+
+  return gulp.src(filesProduction)
   .pipe(concat('game.js'))
   .pipe(gulp.dest('./web/'))
 });
