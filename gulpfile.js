@@ -8,6 +8,7 @@ var gulp = require('gulp'),
 var files = [
   './web/assets/Enemy.js', './web/assets/Map.js', './web/assets/NPC.js', './web/assets/Player.js',
   './web/assets/Scenes/*.js',
+  './web/assets/Network.js',
 ];
 
 gulp.task('prod', function(){
@@ -25,7 +26,12 @@ gulp.task('dev', function(){
   .pipe(gulp.dest('./web/'));
 });
 
-gulp.task('watch', function(){
+gulp.task('prod-watch', function(){
+  livereload.listen();
+  gulp.watch(['./web/assets/*.js', './web/assets/*/*.js'], ['prod-watch']);
+});
+
+gulp.task('dev-watch', function(){
   livereload.listen();
   gulp.watch(['./web/assets/*.js', './web/assets/*/*.js'], ['dev']);
 })
