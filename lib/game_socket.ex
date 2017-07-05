@@ -31,13 +31,13 @@ defmodule Game.Socket do
   end
 
   def websocket_info({:broadcast, data}, request, state) do
-    IO.puts "Broadcast"
     case JSON.encode(data) do
       {:ok, result} -> {:reply, {:text, result}, request, state}
     end
   end
 
   defp handle("join", data, request, state) do
+    IO.puts "Connected " <> data["nickname"]
     state = List.keystore(state, :nickname, 0, {:nickname, data["nickname"]})
 
     join_info = [action: "join", nickname: data["nickname"], content: " entrou no jogo."]
@@ -49,7 +49,6 @@ defmodule Game.Socket do
   end
 
   defp handle("talk", data, request, state) do
-    IO.puts "handle talk"
     {:nickname, nickname} = List.keyfind(state, :nickname, 0)
 
     talk_info = [action: "talk", nickname: nickname, content: data["message"]]

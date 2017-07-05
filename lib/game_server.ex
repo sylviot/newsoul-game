@@ -18,7 +18,6 @@ defmodule Game.Server do
       send pid, {:broadcast, data}
     end)
 
-
     {:reply, :ok, state}
   end
 
