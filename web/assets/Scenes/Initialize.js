@@ -8,7 +8,8 @@ function Initialize(sceneManager, game) {
 
   // ToDo - Precisa da lista de arquivos para download...
   var data = [
-    { filename: 'resources/player.png',       type: 'image'},
+    { filename: 'resources/maps/map_01.json', type: 'json'},
+    { filename: 'resources/player.png'      , type: 'image'},
   ];
 
 

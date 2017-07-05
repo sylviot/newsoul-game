@@ -9,13 +9,12 @@ function Game(sceneManager, game) {
   this.players = [];
   this.player = new Player( 'player_' + (~~(Math.random()*99999)) );
 
-  game.network.connect();
-
+  //game.network.connect();
   game.network.setCallback(onConnected, onMessage, null);
 
   function onConnected(){
     console.log("Join: " + that.player.getName())
-    game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
+    //game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
   }
 
   function onMessage(e) {
@@ -53,14 +52,14 @@ function Game(sceneManager, game) {
 
   this.down = function() { }
 
-  this.timeToUpdate = 0.5;
+  this.timeToUpdate = 0.2;
   this.timeElapsed = 0;
 
   this.update = function() {
     that.timeElapsed+=clock.getDelta();
 
     if(that.timeElapsed > that.timeToUpdate) {
-      game.network.send(JSON.stringify({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} }));
+      game.network.send({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} });
       that.timeElapsed = 0;
     }
   }

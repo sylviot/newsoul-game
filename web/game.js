@@ -1,105 +1,131 @@
-var stats = new Stats();
-var clock = new THREE.Clock();
-var renderer = new THREE.WebGLRenderer({antialias: true});
+function Enemy(id) {
 
-renderer.setClearColor(0x000, 1);
-renderer.setSize(window.innerWidth, window.innerHeight);
+}
 
-document.body.appendChild(stats.dom);
-document.body.appendChild(renderer.domElement);
+function Map(id) {
+  var that = this;
+  var map_id = id;
 
-// Basic itens
-var BASIC_CAMERA = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+  this.materials = [];
+  this.group = new THREE.Group();
+  
+  this.player = null;
+  this.enemies = [];
+  this.backgrounds = [];
+  this.npcs = [];
 
-var network = new Network();
-var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
+  this.load = function() {
+    console.log("map load")
+    var data = {
+      'name': "Mapa 01",
+      'width': 700,
+      'height': 200,
+      'collisions': [],
+      'materials': [{
+        'id': 'tile_0',
+        'sprite': 'tile_0.png',
+        'effects': null
+      }],
+      'tiles': [
+        { 'x': -315, 'y': 70, 'material': 'tile_0' },
+        { 'x': -315, 'y': 35, 'material': 'tile_0' },
+        { 'x': -315, 'y': 0, 'material': 'tile_0' },
+        { 'x': -280, 'y': 0, 'material': 'tile_0' },
+        { 'x': -245, 'y': 0, 'material': 'tile_0' },
+        { 'x': -210, 'y': 0, 'material': 'tile_0' },
+        { 'x': -175, 'y': 0, 'material': 'tile_0' },
+        { 'x': -140, 'y': 0, 'material': 'tile_0' },
+        { 'x': -105, 'y': 0, 'material': 'tile_0' },
+        { 'x': -70, 'y': 0, 'material': 'tile_0' },
+        { 'x': -35, 'y': 0, 'material': 'tile_0' },
+        { 'x': 0, 'y': 0, 'material': 'tile_0' },
+        { 'x': 35, 'y': 0, 'material': 'tile_0' },
+        { 'x': 70, 'y': 0, 'material': 'tile_0' },
+        { 'x': 70, 'y': 35, 'material': 'tile_0' },
+        { 'x': 105, 'y': 0, 'material': 'tile_0' },
+        { 'x': 140, 'y': 0, 'material': 'tile_0' },
+        { 'x': 175, 'y': 0, 'material': 'tile_0' },
+        { 'x': 210, 'y': 0, 'material': 'tile_0' },
+        { 'x': 245, 'y': 0, 'material': 'tile_0' },
+        { 'x': 280, 'y': 0, 'material': 'tile_0' },
+        { 'x': 315, 'y': 0, 'material': 'tile_0' },
+        { 'x': 315, 'y': 35, 'material': 'tile_0' },
+        { 'x': 315, 'y': 70, 'material': 'tile_0' },
+      ],
+      'backgrounds': [
+        {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
+        {'id': "bg_1", 'sprite': "bg_1.png", 'width': 700, 'height': 200, 'z': -2},
+      ],
+      'npcs': [],
+    }
 
-function SceneManager(game) {
-  this.scenes = [Initialize, Splash, /*Login,*/ Game];
-  this.scenesIndex= 0;
-
-  this.initialize = function() {
-    this.next();
+    that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
   }
 
-  this.next = function() {
-    var scene = this.scenes[this.scenesIndex++ % this.scenes.length];
-    this.change(scene);
+  this.addPlayer = function(player) {
+    that.player = player;
+
+    that.group.add(player);
   }
+  this.addEnemy = function(enemy) {}
+  this.addNPC = function(NPC) {}
+  this.addBackground = function(background) {
+    var texture = new THREE.ImageUtils.loadTexture('resources/backgrounds/' + background.sprite),
+        material = new THREE.MeshBasicMaterial({map: texture, transparent: true}),
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(background.width, background.height), material);
+
+    mesh.position.set(0, background.height/2, background.z);
+
+    that.group.add(mesh); 
+  }
+
+  this.addTeleport = function() {}
+
+  this.addTile = function(tile) {
+      var texture = that.materials[tile.material],
+          material  = new THREE.MeshBasicMaterial({map: texture}),
+          mesh = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), material);
+
+      mesh.position.set(tile.x, tile.y, -1);
+
+      that.group.add(mesh);
+  }
+
+  this.build = function(materials, tiles, collisions, backgrounds) {
+    for(var material of materials) {
+      that.materials[material.id] = new THREE.ImageUtils.loadTexture('resources/tiles/' + material.sprite);
+    }
     
-  this.change = function(scene) {
-    if(this.current) this.current.down();
+    for(var tile of tiles) {
+      that.addTile(tile);
+    }
 
-    this.current =  new scene(this, game);
-    this.current.up();
-  }
-
-  this.initialize();
-}
-
-/* NETWORK */
-
-function Network() {
-  var URL = CreateURL(), 
-      websocket,
-      callback_open,
-      callback_message,
-      callback_close;
-
-  function CreateURL() {
-    return 'ws://' + window.location.host + '/ws';
-  }
-
-  this.connect = function() {
-    if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
-      console.log('Connecting...')
-      websocket = new WebSocket(URL);
-      websocket.onopen = function(e){console.log('connected!!!')};//callback_open;
-      websocket.onmessage = callback_message;
+    for(var background of backgrounds) {
+      that.addBackground(background);
     }
   }
 
-  this.setCallback = function(onopen, onmessage, onclose) {
-    websocket.onopen = onopen;
-    websocket.onmessage = onmessage;
-    websocket.onclose = onclose; 
-  }
+  this.getGroup = function() { return that.group; }
 
-  this.state = function() {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return null;
-    }
+  this.update = function() {
 
-    return websocket.readyState;
-  }
-
-  this.send = function(data) {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return;
-    }
-      
-    websocket.send(data);
   }
 }
 
-
-/* SCENE */
 
 function Player(name) {
   var texture = new THREE.ImageUtils.loadTexture('resources/player.png'),
-      material = new THREE.MeshBasicMaterial({map: texture}),
+      material = new THREE.MeshBasicMaterial({color: 0xfff, map: texture}),
       geometry = new THREE.PlaneGeometry(32, 32),
       mesh = new THREE.Mesh(geometry, material);
 
-  mesh.position.set(0, 0, -100);
+  var VELOCITY = 3.5;
+
+  mesh.position.set(15, 35, 0);
 
   mesh.moveX = function(side){
-    if(side == -1) mesh.position.x--;
-    if(side == 1) mesh.position.x++;
-  }
-  mesh.moveY = function(side){
-    if(side == -1) mesh.position.y--;
-    if(side == 1) mesh.position.y++;
+    if(side == -1) mesh.position.x-=VELOCITY;
+    if(side == 1) mesh.position.x+=VELOCITY;
   }
   mesh.moveTo = function(x, y){
     console.log("move to:", x, y)
@@ -109,6 +135,17 @@ function Player(name) {
 
   mesh.getName = function() {
     return name;
+  }
+
+  mesh.getPosition = function() { return mesh.position }
+
+  mesh.keyboardBind = function(key) {
+    if(key == 'LEFT') mesh.moveX(-1);
+    if(key == 'RIGHT') mesh.moveX(1);
+  }
+
+  mesh.mouseBind = function(mouse) {
+
   }
 
   return mesh;
@@ -125,13 +162,12 @@ function Game(sceneManager, game) {
   this.players = [];
   this.player = new Player( 'player_' + (~~(Math.random()*99999)) );
 
-  game.network.connect();
-
+  //game.network.connect();
   game.network.setCallback(onConnected, onMessage, null);
 
   function onConnected(){
     console.log("Join: " + that.player.getName())
-    game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
+    //game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
   }
 
   function onMessage(e) {
@@ -169,109 +205,17 @@ function Game(sceneManager, game) {
 
   this.down = function() { }
 
-  this.timeToUpdate = 0.5;
+  this.timeToUpdate = 0.2;
   this.timeElapsed = 0;
 
   this.update = function() {
     that.timeElapsed+=clock.getDelta();
 
     if(that.timeElapsed > that.timeToUpdate) {
-      game.network.send(JSON.stringify({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} }));
+      game.network.send({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} });
       that.timeElapsed = 0;
     }
-
-
-
   }
-}
-
-function Login(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
-
-  this.camera.position.set(0, 0, 100);
-  game.renderer.setClearColor(0x000, 1);
-
-  function onLogin(){
-    if(!login.value) {
-      login.focus();
-      return;
-    }
-
-    game.network.send('Login');
-    sceneManager.next();
-  }
-
-  var login = document.createElement('input');
-  var login_text = document.createElement('h1');
-  var login_button = document.createElement('button');
-
-  function CreateForm() {
-    login.style.position = 'fixed';
-    login.style.width = '30%';
-    login.style.top = '30%';
-    login.style.left = '35%';
-    login.style.fontSize = '32px';
-    login.style.textAlign = 'center';
-
-    login_text.style.position = 'fixed';
-    login_text.style.width = '30%';
-    login_text.style.top = '20%';
-    login_text.style.left = '35%';
-    login_text.style.textAlign = 'center';
-    login_text.style.color = 'white';
-    login_text.innerHTML = 'Seu nick';
-
-    login_button.style.position = 'fixed';
-    login_button.style.width = '30%';
-    login_button.style.top = '40%';
-    login_button.style.left = '35%';
-    login_button.style.textAlign = 'center';
-    login_button.style.fontSize = '26px';
-    login_button.innerHTML = 'Entrar';
-
-    document.body.appendChild(login);
-    document.body.appendChild(login_text);
-    document.body.appendChild(login_button);
-
-    login_button.addEventListener('click', onLogin, false);
-    login.addEventListener('keydown', function(e) {
-      if(e.keyCode == 13) {
-        onLogin();
-      }
-    }, false);
-
-    login.focus();
-  }
-
-  this.up = function() {
-    game.network.connect();
-    CreateForm();
-  }
-
-  this.down = function() {
-    login.remove();
-    login_text.remove();
-    login_button.remove();
-  }
- 
-  this.update = function(){}
-}
-
-function Splash(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
-
-  this.camera.position.set(0, 0, 100);
-  game.renderer.setClearColor(0x0F0, 1);
-
-  this.up = function() {
-    setTimeout(function(){ sceneManager.next(); }, 300);
-  }
-
-  this.down = function() {}
-
-  this.update = function(){}
 }
 
 function Initialize(sceneManager, game) {
@@ -284,7 +228,8 @@ function Initialize(sceneManager, game) {
 
   // ToDo - Precisa da lista de arquivos para download...
   var data = [
-    { filename: 'resources/player.png',       type: 'image'},
+    { filename: 'resources/maps/map_01.json', type: 'json'},
+    { filename: 'resources/player.png'      , type: 'image'},
   ];
 
 
@@ -345,7 +290,7 @@ function Initialize(sceneManager, game) {
 
       if(!queue_current) { queue_finish(); return; }
 
-      setTimeout(function() {queue_request(queue_current.filename, queue_current.type); },100);
+      setTimeout(function() {queue_request(queue_current.filename, queue_current.type); }, 1000);
     },
     queue_downloading = function(xhr) {
       console.log( (xhr.loaded / xhr.total * 100) + '% percents.' );
@@ -382,6 +327,178 @@ function Initialize(sceneManager, game) {
   }
 
   this.update = function(){}
+}
+
+function Login(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+  this.scene = new THREE.Scene();
+
+  this.camera.position.set(0, 0, 100);
+  game.renderer.setClearColor(0x000, 1);
+
+  function onLogin(){
+    if(!login.value) {
+      login.focus();
+      return;
+    }
+
+    game.network.connect();
+    game.network.setCallback(function() {
+      console.log('Login connect!');
+      game.network.send({action: 'join', nickname: login.value});
+    }, function(data) {
+      console.log('Data:', data);
+      sceneManager.next();
+    }, null);
+  }
+
+  var login = document.createElement('input');
+  var login_text = document.createElement('h1');
+  var login_button = document.createElement('button');
+
+  function CreateForm() {
+    login.style.position = 'fixed';
+    login.style.width = '30%';
+    login.style.top = '30%';
+    login.style.left = '35%';
+    login.style.fontSize = '32px';
+    login.style.textAlign = 'center';
+
+    login_text.style.position = 'fixed';
+    login_text.style.width = '30%';
+    login_text.style.top = '20%';
+    login_text.style.left = '35%';
+    login_text.style.textAlign = 'center';
+    login_text.style.color = 'white';
+    login_text.innerHTML = 'Seu nick';
+
+    login_button.style.position = 'fixed';
+    login_button.style.width = '30%';
+    login_button.style.top = '40%';
+    login_button.style.left = '35%';
+    login_button.style.textAlign = 'center';
+    login_button.style.fontSize = '26px';
+    login_button.innerHTML = 'Entrar';
+
+    document.body.appendChild(login);
+    document.body.appendChild(login_text);
+    document.body.appendChild(login_button);
+
+    login_button.addEventListener('click', onLogin, false);
+    login.addEventListener('keydown', function(e) {
+      if(e.keyCode == 13) {
+        onLogin();
+      }
+    }, false);
+
+    login.focus();
+  }
+
+  this.up = function() {
+    CreateForm();
+  }
+
+  this.down = function() {
+    login.remove();
+    login_text.remove();
+    login_button.remove();
+  }
+ 
+  this.update = function(){}
+}
+
+function Splash(sceneManager, game) {
+  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+  this.scene = new THREE.Scene();
+
+  this.camera.position.set(0, 0, 100);
+  game.renderer.setClearColor(0x0F0, 1);
+
+  this.up = function() {
+    setTimeout(function(){ sceneManager.next(); }, 300);
+  }
+
+  this.down = function() {}
+
+  this.update = function(){}
+}
+
+
+function Network() {
+  var URL = CreateURL(), 
+      websocket;
+
+  function CreateURL() {
+    return 'ws://' + window.location.host + '/ws';
+  }
+
+  this.connect = function() {
+    if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
+      console.log('Connecting...')
+      websocket = new WebSocket(URL);
+    }
+  }
+
+  this.setCallback = function(onopen, onmessage, onclose) {
+    websocket.onopen = onopen;
+    websocket.onmessage = onmessage;
+    websocket.onclose = onclose; 
+  }
+
+  this.state = function() {
+    if(!websocket || !(websocket instanceof WebSocket)) {
+      return null;
+    }
+
+    return websocket.readyState;
+  }
+
+  this.send = function(data) {
+    if(!websocket || !(websocket instanceof WebSocket)) {
+      return;
+    }
+      
+    websocket.send(JSON.stringify(data));
+  }
+}
+
+var stats = new Stats();
+var clock = new THREE.Clock();
+var renderer = new THREE.WebGLRenderer({antialias: true});
+
+renderer.setClearColor(0x000, 1);
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+document.body.appendChild(stats.dom);
+document.body.appendChild(renderer.domElement);
+
+// Basic itens
+var BASIC_CAMERA = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+
+var network = new Network();
+var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
+
+function SceneManager(game) {
+  this.scenes = [Initialize, Splash, Login, Game];
+  this.scenesIndex= 0;
+
+  this.initialize = function() {
+    this.next();
+  }
+
+  this.next = function() {
+    var scene = this.scenes[this.scenesIndex++ % this.scenes.length];
+    this.change(scene);
+  }
+    
+  this.change = function(scene) {
+    if(this.current) this.current.down();
+
+    this.current =  new scene(this, game);
+    this.current.up();
+  }
+
+  this.initialize();
 }
 
 function animate(){

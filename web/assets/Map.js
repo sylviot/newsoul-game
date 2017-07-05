@@ -37,6 +37,7 @@ function Map(id) {
         { 'x': 0, 'y': 0, 'material': 'tile_0' },
         { 'x': 35, 'y': 0, 'material': 'tile_0' },
         { 'x': 70, 'y': 0, 'material': 'tile_0' },
+        { 'x': 70, 'y': 35, 'material': 'tile_0' },
         { 'x': 105, 'y': 0, 'material': 'tile_0' },
         { 'x': 140, 'y': 0, 'material': 'tile_0' },
         { 'x': 175, 'y': 0, 'material': 'tile_0' },
@@ -101,4 +102,8 @@ function Map(id) {
   }
 
   this.getGroup = function() { return that.group; }
+
+  this.update = function() {
+
+  }
 }

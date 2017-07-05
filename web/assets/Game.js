@@ -15,7 +15,7 @@ var network = new Network();
 var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
 
 function SceneManager(game) {
-  this.scenes = [Initialize, Splash, /*Login,*/ Game];
+  this.scenes = [Initialize, Splash, Login, Game];
   this.scenesIndex= 0;
 
   this.initialize = function() {
@@ -35,51 +35,6 @@ function SceneManager(game) {
   }
 
   this.initialize();
-}
-
-/* NETWORK */
-
-function Network() {
-  var URL = CreateURL(), 
-      websocket,
-      callback_open,
-      callback_message,
-      callback_close;
-
-  function CreateURL() {
-    return 'ws://' + window.location.host + '/ws';
-  }
-
-  this.connect = function() {
-    if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
-      console.log('Connecting...')
-      websocket = new WebSocket(URL);
-      websocket.onopen = function(e){console.log('connected!!!')};//callback_open;
-      websocket.onmessage = callback_message;
-    }
-  }
-
-  this.setCallback = function(onopen, onmessage, onclose) {
-    websocket.onopen = onopen;
-    websocket.onmessage = onmessage;
-    websocket.onclose = onclose; 
-  }
-
-  this.state = function() {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return null;
-    }
-
-    return websocket.readyState;
-  }
-
-  this.send = function(data) {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return;
-    }
-      
-    websocket.send(data);
-  }
 }
 
 function animate(){

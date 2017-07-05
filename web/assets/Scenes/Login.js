@@ -11,8 +11,14 @@ function Login(sceneManager, game) {
       return;
     }
 
-    game.network.send('Login');
-    sceneManager.next();
+    game.network.connect();
+    game.network.setCallback(function() {
+      console.log('Login connect!');
+      game.network.send({action: 'join', nickname: login.value});
+    }, function(data) {
+      console.log('Data:', data);
+      sceneManager.next();
+    }, null);
   }
 
   var login = document.createElement('input');
@@ -58,7 +64,6 @@ function Login(sceneManager, game) {
   }
 
   this.up = function() {
-    game.network.connect();
     CreateForm();
   }
 

@@ -4,11 +4,13 @@ function Player(name) {
       geometry = new THREE.PlaneGeometry(32, 32),
       mesh = new THREE.Mesh(geometry, material);
 
+  var VELOCITY = 3.5;
+
   mesh.position.set(15, 35, 0);
 
   mesh.moveX = function(side){
-    if(side == -1) mesh.position.x-=2;
-    if(side == 1) mesh.position.x+=2;
+    if(side == -1) mesh.position.x-=VELOCITY;
+    if(side == 1) mesh.position.x+=VELOCITY;
   }
   mesh.moveTo = function(x, y){
     console.log("move to:", x, y)
