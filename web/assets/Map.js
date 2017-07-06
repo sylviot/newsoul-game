@@ -5,6 +5,7 @@ function Map(id) {
   this.materials = [];
   this.group = new THREE.Group();
   
+  this.gravity = {x: 0, y: -1};
   this.player = null;
   this.enemies = [];
   this.backgrounds = [];

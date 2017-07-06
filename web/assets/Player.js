@@ -4,13 +4,32 @@ function Player(name) {
       geometry = new THREE.PlaneGeometry(32, 32),
       mesh = new THREE.Mesh(geometry, material);
 
-  var VELOCITY = 3.5;
+  mesh.velocity = 2.5;
+  mesh.height = 35;
+  mesh.width = 35;
 
-  mesh.position.set(15, 35, 0);
+  mesh.position.set(40, 45, 0);
+
+  mesh.applyGravity = function(gravity) {
+    mesh.position.x += gravity.x;
+    mesh.position.y += gravity.y;
+  }
+
+  mesh.moveLeft = function(gravity) {
+
+  }
+
+  mesh.moveRight = function(gravity) {
+
+  }
 
   mesh.moveX = function(side){
-    if(side == -1) mesh.position.x-=VELOCITY;
-    if(side == 1) mesh.position.x+=VELOCITY;
+    if(side == -1) mesh.position.x-=mesh.velocity;
+    if(side == 1) mesh.position.x+=mesh.velocity;
+  }
+  mesh.moveY = function(side){
+    if(side == -1) mesh.position.y-=mesh.velocity;
+    if(side == 1) mesh.position.y+=mesh.velocity;
   }
   mesh.moveTo = function(x, y){
     console.log("move to:", x, y)
