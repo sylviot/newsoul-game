@@ -23,21 +23,10 @@ function Map(id) {
         'effects': null
       }],
       'tiles': [
-        { 'x': -315, 'y': 70, 'material': 'tile_0' },
-        { 'x': -315, 'y': 35, 'material': 'tile_0' },
-        { 'x': -315, 'y': 0, 'material': 'tile_0' },
-        { 'x': -280, 'y': 0, 'material': 'tile_0' },
-        { 'x': -245, 'y': 0, 'material': 'tile_0' },
-        { 'x': -210, 'y': 0, 'material': 'tile_0' },
-        { 'x': -175, 'y': 0, 'material': 'tile_0' },
-        { 'x': -140, 'y': 0, 'material': 'tile_0' },
-        { 'x': -105, 'y': 0, 'material': 'tile_0' },
-        { 'x': -70, 'y': 0, 'material': 'tile_0' },
-        { 'x': -35, 'y': 0, 'material': 'tile_0' },
         { 'x': 0, 'y': 0, 'material': 'tile_0' },
+        { 'x': 0, 'y': 35, 'material': 'tile_0' },
         { 'x': 35, 'y': 0, 'material': 'tile_0' },
         { 'x': 70, 'y': 0, 'material': 'tile_0' },
-        { 'x': 70, 'y': 35, 'material': 'tile_0' },
         { 'x': 105, 'y': 0, 'material': 'tile_0' },
         { 'x': 140, 'y': 0, 'material': 'tile_0' },
         { 'x': 175, 'y': 0, 'material': 'tile_0' },
@@ -46,7 +35,6 @@ function Map(id) {
         { 'x': 280, 'y': 0, 'material': 'tile_0' },
         { 'x': 315, 'y': 0, 'material': 'tile_0' },
         { 'x': 315, 'y': 35, 'material': 'tile_0' },
-        { 'x': 315, 'y': 70, 'material': 'tile_0' },
       ],
       'backgrounds': [
         {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
@@ -54,6 +42,8 @@ function Map(id) {
       ],
       'npcs': [],
     }
+
+    that.tiles = data.tiles;
 
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
   }
@@ -103,7 +93,17 @@ function Map(id) {
 
   this.getGroup = function() { return that.group; }
 
-  this.update = function() {
+  this.hasCollision = function(x, y, h, w) {
+    var SIZE = 35, WIDTH = 10;
+    var collisions = [];
 
+    for(var tile of that.tiles){
+      var L = tile.x, R = tile.x+SIZE, U = tile.y, D = tile.y-SIZE;
+
+      var detect = ((x<L && x+w < L) || (x > R)) || ((y-h > U) || (y < D));
+      if( !detect ) return true;
+    }
+
+    return false;
   }
 }
