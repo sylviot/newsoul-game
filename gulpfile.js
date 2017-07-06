@@ -21,7 +21,10 @@ gulp.task('prod', function(){
 });
 
 gulp.task('dev', function(){
-  return gulp.src(files)
+  var filsDev = files;
+  filesDev.push('./web/assets/GameDev.js');
+
+  return gulp.src(filesDev)
   .pipe(concat('game-dev.js'))
   .pipe(gulp.dest('./web/'));
 });
