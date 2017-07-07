@@ -3,7 +3,8 @@ function Map(id) {
   var map_id = id;
 
   this.materials = [];
-  this.group = new THREE.Group();
+  this.camera = new Camera();
+  this.scene = new THREE.Scene();
   
   this.gravity = {x: 0, y: -1};
   this.player = null;
@@ -12,7 +13,8 @@ function Map(id) {
   this.npcs = [];
 
   this.load = function() {
-    console.log("map load")
+    that.camera.setPosition(0, 0, 700);
+
     var data = {
       'name': "Mapa 01",
       'width': 700,
@@ -26,16 +28,40 @@ function Map(id) {
       'tiles': [
         { 'x': 0, 'y': 0, 'material': 'tile_0' },
         { 'x': 0, 'y': 35, 'material': 'tile_0' },
+        { 'x': 0, 'y': 70, 'material': 'tile_0' },
+        { 'x': 0, 'y': 105, 'material': 'tile_0' },
+        { 'x': 0, 'y': 140, 'material': 'tile_0' },
+        { 'x': 0, 'y': 175, 'material': 'tile_0' },
+        { 'x': 0, 'y': 210, 'material': 'tile_0' },
+        { 'x': 0, 'y': 245, 'material': 'tile_0' },
+        { 'x': 0, 'y': 280, 'material': 'tile_0' },
+        { 'x': 0, 'y': 315, 'material': 'tile_0' },
+        { 'x': 0, 'y': 350, 'material': 'tile_0' },
         { 'x': 35, 'y': 0, 'material': 'tile_0' },
         { 'x': 70, 'y': 0, 'material': 'tile_0' },
         { 'x': 105, 'y': 0, 'material': 'tile_0' },
         { 'x': 140, 'y': 0, 'material': 'tile_0' },
+        { 'x': 140, 'y': 105, 'material': 'tile_0' },
+        { 'x': 140, 'y': 105, 'material': 'tile_0' },
+        { 'x': 175, 'y': 105, 'material': 'tile_0' },
         { 'x': 175, 'y': 0, 'material': 'tile_0' },
         { 'x': 210, 'y': 0, 'material': 'tile_0' },
         { 'x': 245, 'y': 0, 'material': 'tile_0' },
         { 'x': 280, 'y': 0, 'material': 'tile_0' },
         { 'x': 315, 'y': 0, 'material': 'tile_0' },
-        { 'x': 315, 'y': 35, 'material': 'tile_0' },
+        { 'x': 350, 'y': 0, 'material': 'tile_0' },
+        { 'x': 385, 'y': 0, 'material': 'tile_0' },
+        { 'x': 420, 'y': 0, 'material': 'tile_0' },
+        { 'x': 455, 'y': 0, 'material': 'tile_0' },
+        { 'x': 490, 'y': 0, 'material': 'tile_0' },
+        { 'x': 525, 'y': 0, 'material': 'tile_0' },
+        { 'x': 560, 'y': 0, 'material': 'tile_0' },
+        { 'x': 595, 'y': 0, 'material': 'tile_0' },
+        { 'x': 630, 'y': 0, 'material': 'tile_0' },
+        { 'x': 665, 'y': 0, 'material': 'tile_0' },
+        { 'x': 700, 'y': 0, 'material': 'tile_0' },
+        { 'x': 735, 'y': 0, 'material': 'tile_0' },
+        { 'x': 770, 'y': 0, 'material': 'tile_0' },
       ],
       'backgrounds': [
         {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
@@ -48,11 +74,12 @@ function Map(id) {
 
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
   }
-
+  
   this.addPlayer = function(player) {
     that.player = player;
+    that.player.add(that.camera);
 
-    that.group.add(player);
+    that.scene.add(player);
   }
   this.addEnemy = function(enemy) {}
   this.addNPC = function(NPC) {}
@@ -63,11 +90,9 @@ function Map(id) {
 
     mesh.position.set(0, background.height/2, background.z);
 
-    that.group.add(mesh); 
+    that.scene.add(mesh); 
   }
-
   this.addTeleport = function() {}
-
   this.addTile = function(tile) {
       var texture = that.materials[tile.material],
           material  = new THREE.MeshBasicMaterial({map: texture}),
@@ -75,7 +100,7 @@ function Map(id) {
 
       mesh.position.set(tile.x, tile.y, -1);
 
-      that.group.add(mesh);
+      that.scene.add(mesh);
   }
 
   this.build = function(materials, tiles, collisions, backgrounds) {
@@ -92,7 +117,8 @@ function Map(id) {
     }
   }
 
-  this.getGroup = function() { return that.group; }
+  this.getCamera = function() { return that.camera; }
+  this.getScene = function() { return that.scene; }
 
   this.hasCollision = function(x, y, h, w) {
     var SIZE = 35, WIDTH = 10;
