@@ -13,6 +13,13 @@ function Initialize(sceneManager, game) {
   ];
 
 
+  var logo = document.createElement('img');
+  logo.src = 'resources/logo.png';
+  logo.style.position = 'fixed';
+  logo.style.width = '30%';
+  logo.style.top = '10%';
+  logo.style.left = '35%';
+
   // ToDo - criar um gerador de texto
   var text_1 = document.createElement('h1');
   text_1.style.position = 'fixed';
@@ -46,6 +53,7 @@ function Initialize(sceneManager, game) {
   progress_bar.style.width = '0%';
   progress.appendChild(progress_bar);
 
+  document.body.appendChild(logo);
   document.body.appendChild(text_1);
   document.body.appendChild(text);
   document.body.appendChild(progress);
@@ -63,7 +71,7 @@ function Initialize(sceneManager, game) {
         queue_current;
 
     var queue_finish = function() {
-      sceneManager.next();
+      //sceneManager.next();
     },
     queue_next = function() {
       queue_current = queue_files.shift(); 
@@ -101,6 +109,7 @@ function Initialize(sceneManager, game) {
   }
 
   this.down = function() {
+    logo.remove();
     text.remove();
     text_1.remove();
     progress.remove();
