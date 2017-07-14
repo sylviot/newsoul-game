@@ -71,7 +71,7 @@ function Initialize(sceneManager, game) {
         queue_current;
 
     var queue_finish = function() {
-      //sceneManager.next();
+      sceneManager.next();
     },
     queue_next = function() {
       queue_current = queue_files.shift(); 
