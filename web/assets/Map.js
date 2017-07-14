@@ -6,6 +6,7 @@ function Map(id) {
   this.camera = new Camera();
   this.scene = new THREE.Scene();
   
+  this.clearColor = 0x000;
   this.gravity = {x: 0, y: -1};
   this.player = null;
   this.enemies = [];
@@ -62,6 +63,27 @@ function Map(id) {
         { 'x': 700, 'y': 0, 'material': 'tile_0' },
         { 'x': 735, 'y': 0, 'material': 'tile_0' },
         { 'x': 770, 'y': 0, 'material': 'tile_0' },
+        { 'x': 805, 'y': 0, 'material': 'tile_0' },
+        { 'x': 840, 'y': 0, 'material': 'tile_0' },
+        { 'x': 875, 'y': 0, 'material': 'tile_0' },
+        { 'x': 910, 'y': 0, 'material': 'tile_0' },
+        { 'x': 945, 'y': 0, 'material': 'tile_0' },
+        { 'x': 980, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1015, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1050, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1085, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1120, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1155, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1190, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1225, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1260, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1295, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1330, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1365, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1400, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1435, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1470, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 0, 'material': 'tile_0' },
       ],
       'backgrounds': [
         {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
@@ -74,10 +96,12 @@ function Map(id) {
 
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
   }
-  
+
+  /* ADICIONAR ELEMENTOS */
+
   this.addPlayer = function(player) {
     that.player = player;
-    that.player.add(that.camera);
+    that.camera.follow(that.player, -17.5, -17.5);
 
     that.scene.add(player);
   }
