@@ -6,7 +6,7 @@ function Map(id) {
   this.camera = new Camera();
   this.scene = new THREE.Scene();
   
-  this.clearColor = 0x000;
+  this.clearColor = 0x7B9EFF;
   this.gravity = {x: 0, y: -1};
   this.player = null;
   this.enemies = [];
@@ -38,13 +38,20 @@ function Map(id) {
         { 'x': 0, 'y': 280, 'material': 'tile_0' },
         { 'x': 0, 'y': 315, 'material': 'tile_0' },
         { 'x': 0, 'y': 350, 'material': 'tile_0' },
+        { 'x': 0, 'y': 385, 'material': 'tile_0' },
+        { 'x': 0, 'y': 420, 'material': 'tile_0' },
+        { 'x': 0, 'y': 455, 'material': 'tile_0' },
+        { 'x': 0, 'y': 490, 'material': 'tile_0' },
+        { 'x': 0, 'y': 525, 'material': 'tile_0' },
+
+        { 'x': 140, 'y': 105, 'material': 'tile_0' },
+        { 'x': 140, 'y': 105, 'material': 'tile_0' },
+        { 'x': 175, 'y': 105, 'material': 'tile_0' },
+
         { 'x': 35, 'y': 0, 'material': 'tile_0' },
         { 'x': 70, 'y': 0, 'material': 'tile_0' },
         { 'x': 105, 'y': 0, 'material': 'tile_0' },
         { 'x': 140, 'y': 0, 'material': 'tile_0' },
-        { 'x': 140, 'y': 105, 'material': 'tile_0' },
-        { 'x': 140, 'y': 105, 'material': 'tile_0' },
-        { 'x': 175, 'y': 105, 'material': 'tile_0' },
         { 'x': 175, 'y': 0, 'material': 'tile_0' },
         { 'x': 210, 'y': 0, 'material': 'tile_0' },
         { 'x': 245, 'y': 0, 'material': 'tile_0' },
@@ -84,6 +91,67 @@ function Map(id) {
         { 'x': 1435, 'y': 0, 'material': 'tile_0' },
         { 'x': 1470, 'y': 0, 'material': 'tile_0' },
         { 'x': 1505, 'y': 0, 'material': 'tile_0' },
+        { 'x': 35, 'y': 525, 'material': 'tile_0' },
+        { 'x': 70, 'y': 525, 'material': 'tile_0' },
+        { 'x': 105, 'y': 525, 'material': 'tile_0' },
+        { 'x': 140, 'y': 525, 'material': 'tile_0' },
+        { 'x': 175, 'y': 525, 'material': 'tile_0' },
+        { 'x': 210, 'y': 525, 'material': 'tile_0' },
+        { 'x': 245, 'y': 525, 'material': 'tile_0' },
+        { 'x': 280, 'y': 525, 'material': 'tile_0' },
+        { 'x': 315, 'y': 525, 'material': 'tile_0' },
+        { 'x': 350, 'y': 525, 'material': 'tile_0' },
+        { 'x': 385, 'y': 525, 'material': 'tile_0' },
+        { 'x': 420, 'y': 525, 'material': 'tile_0' },
+        { 'x': 455, 'y': 525, 'material': 'tile_0' },
+        { 'x': 490, 'y': 525, 'material': 'tile_0' },
+        { 'x': 525, 'y': 525, 'material': 'tile_0' },
+        { 'x': 560, 'y': 525, 'material': 'tile_0' },
+        { 'x': 595, 'y': 525, 'material': 'tile_0' },
+        { 'x': 630, 'y': 525, 'material': 'tile_0' },
+        { 'x': 665, 'y': 525, 'material': 'tile_0' },
+        { 'x': 700, 'y': 525, 'material': 'tile_0' },
+        { 'x': 735, 'y': 525, 'material': 'tile_0' },
+        { 'x': 770, 'y': 525, 'material': 'tile_0' },
+        { 'x': 805, 'y': 525, 'material': 'tile_0' },
+        { 'x': 840, 'y': 525, 'material': 'tile_0' },
+        { 'x': 875, 'y': 525, 'material': 'tile_0' },
+        { 'x': 910, 'y': 525, 'material': 'tile_0' },
+        { 'x': 945, 'y': 525, 'material': 'tile_0' },
+        { 'x': 980, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1015, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1050, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1085, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1120, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1155, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1190, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1225, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1260, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1295, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1330, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1365, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1400, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1435, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1470, 'y': 525, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 525, 'material': 'tile_0' },
+
+        { 'x': 1505, 'y': 0, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 35, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 70, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 105, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 140, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 175, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 210, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 245, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 280, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 315, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 350, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 385, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 420, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 455, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 490, 'material': 'tile_0' },
+        { 'x': 1505, 'y': 525, 'material': 'tile_0' },
+
       ],
       'backgrounds': [
         {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
@@ -95,6 +163,11 @@ function Map(id) {
     that.tiles = data.tiles;
 
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
+  }
+
+  this.update = function() {
+    that.camera.update();
+
   }
 
   /* ADICIONAR ELEMENTOS */
@@ -112,7 +185,7 @@ function Map(id) {
         material = new THREE.MeshBasicMaterial({map: texture, transparent: true}),
         mesh = new THREE.Mesh(new THREE.PlaneGeometry(background.width, background.height), material);
 
-    mesh.position.set(0, background.height/2, background.z);
+    mesh.position.set(background.width, background.height, background.z);
 
     that.scene.add(mesh); 
   }
