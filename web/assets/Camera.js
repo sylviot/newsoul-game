@@ -19,10 +19,12 @@ function Camera() {
     instance.position.set(x, y, z);
   }
 
-  instance.follow = function(object, boundHeight, boundWidth) {
+  instance.follow = function(object, boundX, boundY, boundWidth, boundHeight) {
     _object = object;
-    _boundHeight = boundHeight;
+    _boundX = boundX;
+    _boundY = boundY;
     _boundWidth = boundWidth;
+    _boundHeight = boundHeight;
   }
 
   Math.toRadius = function(angle) {
@@ -33,12 +35,15 @@ function Camera() {
   instance.update = function() {
     new_position = {x: _object.position.x, y: _object.position.y,z: instance.position.z};
 
-    var distance_x = _boundWidth + WIDTH/2;
+    var distance_x = _boundX + WIDTH/2,
+        distance_bound_x = _boundWidth - WIDTH/2;
     if(new_position.x < distance_x) {
       new_position.x = distance_x;
+    } else if(new_position.x > distance_bound_x){
+      new_position.x = distance_bound_x;
     }
 
-    var distance_y = _boundHeight + HEIGHT/2;
+    var distance_y = _boundY + HEIGHT/2;
     if(new_position.y < distance_y){
       new_position.y = distance_y;
     }
