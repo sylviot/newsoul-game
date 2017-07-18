@@ -154,8 +154,21 @@ function Map(id) {
 
       ],
       'backgrounds': [
-        {'id': "bg_0", 'sprite': "bg_0.png", 'width': 700, 'height': 200, 'z': -3},
-        {'id': "bg_1", 'sprite': "bg_1.png", 'width': 700, 'height': 200, 'z': -2},
+        {'id': "bg_0", 'sprite': "bg_0.png", 'x': 700, 'y': 200, 'z': -3},
+        {'id': "bg_1", 'sprite': "bg_1.png", 'x': 700, 'y': 200, 'z': -2},
+
+        {'id': "bg_hill_0", 'sprite': "hill.png", 'width': 1200, 'height': 610, 'x': -150, 'y': -200, 'z': -4},
+        {'id': "bg_hill_1", 'sprite': "hill.png", 'width': 1200, 'height': 610, 'x': 900, 'y': -200, 'z': -4},
+
+        {'id': "bg_pilar_0", 'sprite': "pillar.png", 'width': 183, 'height': 300, 'x': 663, 'y': 18, 'z': -2},
+
+        {'id': "bg_crystal_0", 'sprite': "crystal.png", 'width': 97, 'height': 80, 'x': 700, 'y': 320, 'z': -2},
+
+        {'id': "bg_cloud_0", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 200, 'y': 410, 'z': -3},
+        {'id': "bg_cloud_1", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 500, 'y': 510, 'z': -3},
+        {'id': "bg_cloud_2", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 800, 'y': 390, 'z': -3},
+        {'id': "bg_cloud_3", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 1100, 'y': 340, 'z': -3},
+        {'id': "bg_cloud_4", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 1300, 'y': 470, 'z': -3},
       ],
       'npcs': [],
     }
@@ -174,7 +187,7 @@ function Map(id) {
 
   this.addPlayer = function(player) {
     that.player = player;
-    that.camera.follow(that.player, -17.5, -17.5);
+    that.camera.follow(that.player, -17.5, -17.5, 1522.5, 532.5);
 
     that.scene.add(player);
   }
@@ -185,7 +198,7 @@ function Map(id) {
         material = new THREE.MeshBasicMaterial({map: texture, transparent: true}),
         mesh = new THREE.Mesh(new THREE.PlaneGeometry(background.width, background.height), material);
 
-    mesh.position.set(background.width, background.height, background.z);
+    mesh.position.set(background.x + background.width/2, background.y + background.height/2, background.z);
 
     that.scene.add(mesh); 
   }
