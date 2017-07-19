@@ -21,6 +21,9 @@ function Chat() {
   chat_message.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
   chat_message.style.width = '100%';
   chat_message.style.height = '100%';
+  chat_message.style.paddingRight = '20px';
+  chat_message.style.marginTop = '-24px';
+  chat_message.style.overflowY = 'auto';
   chat_message.style.fontSize = CONFIGURATION.fontSize;
   chat_message.style.fontFamily = CONFIGURATION.fontFamily;
 
@@ -43,6 +46,7 @@ function Chat() {
 
   this.receiveMessage = function(from, content) {
     chat_message.innerHTML += '<span style="display:block"><strong>' + from + '</strong>: ' + content + '</span>';
+    chat_message.scrollTop = chat_message.scrollHeight;
   }
 
   chat_input.addEventListener('keydown', function(event, a){
