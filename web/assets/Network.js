@@ -3,12 +3,11 @@ function Network() {
       websocket;
 
   function CreateURL() {
-    return 'ws://' + window.location.host + '/ws';
+    return 'wss://' + window.location.host + '/ws';
   }
 
   this.connect = function() {
     if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
-      console.log('Connecting...')
       websocket = new WebSocket(URL);
     }
   }
