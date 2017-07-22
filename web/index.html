@@ -1,15 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   <title>New Soul - Game</title>
-  <link rel="stylesheet" href="/engines/three.css">
-  <script src="/engines/three.min.js"></script>
-  <script src="/engines/three.stats.min.js"></script>
+  <style>
+  body{background-color:black; color:white}
+  #ns-conteudo span {display:block;margin:10px 0;padding:0 10px;text-transform:uppercase;font-weight:bold;font-family:sans-serif;}
+  #ns-conteudo input {display:block;margin:0 auto;height: 30px;text-align:center;font-size:16px}
+  #ns-conteudo button {text-transform:uppercase;font-size:14px;font-weight:bold;height:40px;margin:10px 0;padding:10px;outline:none;border-radius:3px;border-color:#0373da;background-color:#0078e7;color:white}
+  @media (max-width: 767px)
+  {
+    #ns-logo > img {
+      width: 90%;
+    }
+    #ns-conteudo span{
+      font-size: 13px;
+    }
+    #ns-conteudo input {
+      width: 90%;
+    }
+  }
+  @media (min-width:768px)
+  {
+    #ns-logo img {
+      width: 400px;
+    }
+    #ns-conteudo span {
+      font-size: 17px 
+    }
+    #ns-conteudo input {
+      width: 600px
+    }
+  } 
+  </style>
 </head>
 <body>
-<div class="fps"> <canvas width="80" height="48"></canvas> </div>
-<script src="/game.js"></script>
+  <div id="ns-logo" style="text-align: center">
+    <img src="resources/logo.png" alt="">
+  </div>
+  <div id="ns-conteudo" style=" text-align: center; ">
+    <span>Quer mais informações sobre o New Soul?</span>
+    <input type="text" placeholder="email@email.com">
+    <button type="button">Cadastrar</button>
+  </div> 
 </body>
 </html>
