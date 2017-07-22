@@ -1,3 +1,4 @@
+(function(){
 var stats = new Stats();
 var clock = new THREE.Clock();
 var renderer = new THREE.WebGLRenderer({antialias: true});
@@ -54,3 +55,5 @@ function render(){
 }
 
 animate();
+
+}());
