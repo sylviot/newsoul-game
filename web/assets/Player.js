@@ -29,11 +29,9 @@ function Player(name) {
     new_position.y = y;
   }
 
-  mesh.getName = function() {
-    return name;
-  }
 
-  mesh.getPosition = function() { return mesh.position }
+  mesh.getName = function() { return name; }
+  mesh.getPosition = function() { return new_position; }
 
   mesh.keyboardBind = function(key) {
     if(key == 'LEFT') mesh.moveX(-1);
