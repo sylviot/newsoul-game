@@ -5,6 +5,10 @@ function Map(id) {
   this.materials = [];
   this.camera = new Camera();
   this.scene = new THREE.Scene();
+  this.chat = new Chat();
+  this.chat.hookMessage = function() {
+    console.log('send message from chat');
+  } 
   
   this.clearColor = 0x7B9EFF;
   this.gravity = {x: 0, y: -1};
@@ -180,6 +184,7 @@ function Map(id) {
 
   this.update = function() {
     that.camera.update();
+    that.player.update();
 
   }
 
