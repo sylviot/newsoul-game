@@ -31,7 +31,7 @@ function Camera() {
     return angle * Math.PI / 180;
   }
 
-  var old_position = null, new_position = null;
+  var new_position = null;
   instance.update = function() {
     new_position = {x: _object.position.x, y: _object.position.y,z: instance.position.z};
 
@@ -46,9 +46,10 @@ function Camera() {
     var distance_y = _boundY + HEIGHT/2;
     if(new_position.y < distance_y){
       new_position.y = distance_y;
-    }
+    } 
 
-    instance.position.set(new_position.x, new_position.y, new_position.z);
+    var delta = 0.1;
+    instance.position.set(THREE.Math.lerp(instance.position.x, new_position.x, delta), THREE.Math.lerp(instance.position.y, new_position.y, delta), new_position.z);
   }
 
   return instance;

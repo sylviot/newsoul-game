@@ -4,37 +4,29 @@ function Player(name) {
       geometry = new THREE.PlaneGeometry(32, 32),
       mesh = new THREE.Mesh(geometry, material);
 
-  mesh.velocity = 2.5;
+  var new_position = {x:300, y:45, z:0};
+  mesh.velocity = 5.5;
   mesh.height = 35;
   mesh.width = 35;
 
-  mesh.position.set(40, 45, 0);
+  mesh.position.set(new_position.x, new_position.y, new_position.z);
 
   mesh.applyGravity = function(gravity) {
     mesh.position.x += gravity.x;
     mesh.position.y += gravity.y;
   }
 
-  mesh.moveLeft = function(gravity) {
-
-  }
-
-  mesh.moveRight = function(gravity) {
-
-  }
-
   mesh.moveX = function(side){
-    if(side == -1) mesh.position.x-=mesh.velocity;
-    if(side == 1) mesh.position.x+=mesh.velocity;
+    if(side == -1) new_position.x-=mesh.velocity;
+    if(side == 1) new_position.x+=mesh.velocity;
   }
   mesh.moveY = function(side){
-    if(side == -1) mesh.position.y-=mesh.velocity;
-    if(side == 1) mesh.position.y+=mesh.velocity;
+    if(side == -1) new_position.y-=mesh.velocity;
+    if(side == 1) new_position.y+=mesh.velocity;
   }
   mesh.moveTo = function(x, y){
-    console.log("move to:", x, y)
-    mesh.position.x = x;
-    mesh.position.y = y;
+    new_position.x = x;
+    new_position.y = y;
   }
 
   mesh.getName = function() {
@@ -50,6 +42,16 @@ function Player(name) {
 
   mesh.mouseBind = function(mouse) {
 
+  }
+
+  mesh.update = function() {
+    var delta = 0.2;
+
+    mesh.position.set(
+      THREE.Math.lerp(mesh.position.x, new_position.x, delta),
+      THREE.Math.lerp(mesh.position.y, new_position.y, delta),
+      THREE.Math.lerp(mesh.position.z, new_position.z, delta)
+    );
   }
 
   return mesh;
