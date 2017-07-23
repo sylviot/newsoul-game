@@ -18,7 +18,7 @@ defmodule Game.Socket do
     leave_info = [action: "leave", nickname: nickname]
 
     :gen_server.call(:game_server, {:leave, :nickname})
-    :gen_server.call(:game_server, {:talk, leave_info})
+    :gen_server.call(:game_server, {:chat, nickname, leave_info})
 
     :ok
   end
@@ -36,6 +36,31 @@ defmodule Game.Socket do
     end
   end
 
+  defp handle("login_account", data, request, state) do
+    IO.puts "> Try login account"
+
+    :gen_server.call(:game_server, {:login_account, data["login"], data["senha"]});
+
+    {:ok, request, state}
+  end
+
+  defp handle("load_character", data, request, state) do
+    IO.puts "> Load character info"
+    state = List.keystore(state, :nickname, 0, {:nickname, data["character_id"]})
+
+    :gen_server.call(:game_server, {:load_character, data["character_id"]})
+
+    {:ok, request, state}
+  end
+
+  defp handle("movement", data, request, state) do
+    {:nickname, nickname} = List.keyfind(state, :nickname, 0) 
+
+    :gen_server.call(:game_server, {:movement, nickname, data["x"], data["y"]})
+
+    {:ok, request, state}
+  end
+
   defp handle("join", data, request, state) do
     IO.puts "Connected " <> data["nickname"]
     state = List.keystore(state, :nickname, 0, {:nickname, data["nickname"]})
@@ -43,17 +68,17 @@ defmodule Game.Socket do
     join_info = [action: "join", nickname: data["nickname"], content: " entrou no jogo."]
 
     :gen_server.call(:game_server, {:join, data["nickname"]})
-    :gen_server.call(:game_server, {:talk, join_info})
+    :gen_server.call(:game_server, {:chat, join_info})
 
     {:ok, request, state}
   end
 
-  defp handle("talk", data, request, state) do
+  defp handle("chat", data, request, state) do
     {:nickname, nickname} = List.keyfind(state, :nickname, 0)
 
-    talk_info = [action: "talk", nickname: nickname, content: data["message"]]
+    chat_data = [action: "chat", nickname: nickname, message: data["message"]]
 
-    :gen_server.call(:game_server, {:talk, talk_info})
+    :gen_server.call(:game_server, {:chat, nickname, chat_data})
 
     {:ok, request, state}
   end

@@ -25,6 +25,7 @@ function Player(name) {
     if(side == 1) new_position.y+=mesh.velocity;
   }
   mesh.moveTo = function(x, y){
+    delta = 0.2
     new_position.x = x;
     new_position.y = y;
   }
