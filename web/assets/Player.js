@@ -4,6 +4,9 @@ function Player(name) {
       geometry = new THREE.PlaneGeometry(32, 32),
       mesh = new THREE.Mesh(geometry, material);
 
+  var text = new Text(name);
+  mesh.add(text);
+
   var new_position = {x:300, y:45, z:0};
   mesh.velocity = 5.5;
   mesh.height = 35;
