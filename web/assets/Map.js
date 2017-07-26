@@ -203,6 +203,8 @@ function Map(id) {
         material = new THREE.MeshBasicMaterial({map: texture, transparent: true}),
         mesh = new THREE.Mesh(new THREE.PlaneGeometry(background.width, background.height), material);
 
+    texture.minFilter = THREE.LinearFilter;
+
     mesh.position.set(background.x + background.width/2, background.y + background.height/2, background.z);
 
     that.scene.add(mesh); 
@@ -220,7 +222,9 @@ function Map(id) {
 
   this.build = function(materials, tiles, collisions, backgrounds) {
     for(var material of materials) {
-      that.materials[material.id] = new THREE.ImageUtils.loadTexture('resources/tiles/' + material.sprite);
+      let texture = new THREE.ImageUtils.loadTexture('resources/tiles/' + material.sprite);
+      texture.minFilter = THREE.LinearFilter;
+      that.materials[material.id] = texture;
     }
     
     for(var tile of tiles) {
