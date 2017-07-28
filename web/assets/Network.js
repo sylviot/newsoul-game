@@ -30,7 +30,7 @@ function GameNetwork(options) {
       case 'login_account_fail': invoke('login_fail', data); break;
       case 'load_character': invoke('load_character', data); break;
       case 'join': invoke('join', data); break;
-      case 'leave': invoke('leave', data);
+      case 'leave': invoke('leave', data); break;
       case 'chat': invoke('receive_message', data); break;
       case 'movement': invoke('movement', data); break;
     }
