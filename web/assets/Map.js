@@ -6,13 +6,11 @@ function Map(id) {
   this.camera = new Camera();
   this.scene = new THREE.Scene();
   this.chat = new Chat();
-  this.chat.hookMessage = function() {
-    console.log('send message from chat');
-  } 
   
   this.clearColor = 0x7B9EFF;
   this.gravity = {x: 0, y: -1};
   this.player = null;
+  this.players = [];
   this.enemies = [];
   this.backgrounds = [];
   this.npcs = [];
@@ -186,6 +184,9 @@ function Map(id) {
     that.camera.update();
     that.player.update();
 
+    for(var i in that.players) {
+      that.players[i].update();
+    }
   }
 
   /* ADICIONAR ELEMENTOS */
@@ -195,6 +196,22 @@ function Map(id) {
     that.camera.follow(that.player, -17.5, -17.5, 1522.5, 532.5);
 
     that.scene.add(player);
+  }
+  this.addOtherPlayer = function(player) {
+    that.players[player.nickname] = new Player();
+    that.players[player.nickname].setName(player.nickname);
+    that.players[player.nickname].position.set(player.x, player.y, 0);
+
+    that.scene.add(that.players[player.nickname]);
+  }
+  this.updateOtherPlayer = function(player) {
+    if(!that.players[player.nickname]) that.addOtherPlayer(player);// Provisorio até vim a lista de personagens no JOIN
+
+    that.players[player.nickname].moveTo(player.x, player.y);
+  }
+  this.deleteOtherPlayer = function(player) {
+    that.scene.remove(that.players[player.nickname]);
+    delete that.players[player.nickname];
   }
   this.addEnemy = function(enemy) {}
   this.addNPC = function(NPC) {}
