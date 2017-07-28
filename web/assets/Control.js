@@ -11,7 +11,7 @@ function Control(keyboardBind, mouseBind) {
     if(HOTKEYS[keyCode]) keyboardBind(HOTKEYS[keyCode]);
   }
 
-  window.onMouse = function(e){}
-
+  document.body.oncontextmenu = function(e) { e.preventDefault(); mouseBind('RIGHT'); }
+  document.body.onclick = function(e){ e.preventDefault(); mouseBind('LEFT'); }
 }
 
