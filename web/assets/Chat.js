@@ -44,15 +44,15 @@ function Chat() {
     CONFIGURATION[key] = value;
   }
 
-  this.receiveMessage = function(from, content) {
-    chat_message.innerHTML += '<span style="display:block"><strong>' + from + '</strong>: ' + content + '</span>';
+  this.receiveMessage = function(data) {
+    chat_message.innerHTML += '<span style="display:block"><strong>' + data.nickname + '</strong>: ' + data.message + '</span>';
     chat_message.scrollTop = chat_message.scrollHeight;
   }
 
   chat_input.addEventListener('keydown', function(event, a){
-    if(event.keyCode == 13) {
-      that.receiveMessage('EU', chat_input.value);
-      that.hookMessage(chat_input.value);
+    if(event.keyCode == 13 && chat_input.value) {
+      that.receiveMessage({nickname: 'EU', message: chat_input.value});
+      that.emitter_send_message(chat_input.value);
       chat_input.value = '';
     }
   });
