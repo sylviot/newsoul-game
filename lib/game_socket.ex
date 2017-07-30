@@ -73,6 +73,15 @@ defmodule Game.Socket do
     {:ok, request, state}
   end
 
+  defp handle("bug", data, request, state) do
+    IO.puts "BUG"
+    {:nickname, nickname} = List.keyfind(state, :nickname, 0)
+
+    :gen_server.call(:game_server, {:bug, nickname, data["text"], data["screen"]})
+
+    {:ok, request, state}
+  end
+
   defp handle("chat", data, request, state) do
     {:nickname, nickname} = List.keyfind(state, :nickname, 0)
 

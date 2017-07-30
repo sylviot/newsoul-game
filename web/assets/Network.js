@@ -76,6 +76,9 @@ function GameNetwork(options) {
   this.sendMovement = function(x, y) {
     send({action: 'movement', x: x, y: y})
   }
+  this.sendBug = function(data, text) {
+    send({action: 'bug', screen: data, text: text})
+  }
 
   /* INTERNAL FUNCTION */
   function send(data) {

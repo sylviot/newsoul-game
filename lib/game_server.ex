@@ -40,6 +40,20 @@ defmodule Game.Server do
     {:reply, :ok, state}
   end
 
+  def handle_call({:bug, nickname, text, screen}, {_from, _reference}, state) do
+    "data:image/png;base64," <> raw = screen
+
+    {:ok, data} = Base.decode64(raw)
+
+    dt = DateTime.utc_now
+    filename = "#{dt.year}#{dt.month}#{dt.day}#{dt.hour}#{dt.minute}#{dt.second}"
+
+    File.write("./web/bug/index.html", "<a href='/bug/#{filename}.png' target='_blank'>Screen</a> [#{DateTime.to_string(dt)}] #{text} <br>" , [:append])
+    File.write("./web/bug/#{filename}.png", data)
+
+    {:reply, :ok, state}
+  end
+
   def handle_call({:chat, nickname, data}, {_from, _reference}, state) do
     players = HashSet.delete(state, {_from, nickname})
 
