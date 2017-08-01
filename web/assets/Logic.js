@@ -12,7 +12,7 @@ document.body.appendChild(renderer.domElement);
 // Basic itens
 var BASIC_CAMERA = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
 
-var network = new Network();
+var network = new GameNetwork();
 var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
 
 function SceneManager(game) {

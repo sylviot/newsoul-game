@@ -1,66 +1,64 @@
 function Game(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
+  var that = this; 
 
-  this.camera.position.set(0, 0, 100);
-  game.renderer.setClearColor(0x000, 1);
+  this.bugReport = new BugReport(game.renderer, game.network.sendBug);
 
-  var that = this;
-  this.players = [];
-  this.player = new Player( 'player_' + (~~(Math.random()*99999)) );
+  this.map = new Map('map_id');
+  this.camera = this.map.getCamera();
+  this.scene = this.map.getScene();
 
-  //game.network.connect();
-  game.network.setCallback(onConnected, onMessage, null);
+  this.player = new Player();
+  this.player.setName(nickname);
 
-  function onConnected(){
-    console.log("Join: " + that.player.getName())
-    //game.network.send(JSON.stringify({action: 'join', nickname: that.player.getName(), message: 'mensagem'}));
-  }
+  game.renderer.setClearColor(this.map.clearColor, 1);
+  game.renderer.setSize(window.innerWidth, window.innerHeight);
 
-  function onMessage(e) {
-    var data = JSON.parse(e.data);
-    
-    if(data.nickname != that.player.getName() && !that.players[data.nickname]) {
-      that.players[data.nickname] = new Player(data.nickname);
-      that.scene.add(that.players[data.nickname]);
+  game.network.hook_receive_message(that.map.chat.receiveMessage);
+
+  game.network.hook_join(this.map.addOtherPlayer);
+  game.network.hook_movement(this.map.updateOtherPlayer);
+  game.network.hook_leave(this.map.deleteOtherPlayer);
+
+  this.map.chat.emitter_send_message = game.network.sendChat;
+
+  this.control = new Control(keyboardBind, this.player.mouseBind);
+
+  this.map.addPlayer(this.player);
+  this.map.load();
+
+  function keyboardBind(key) {
+    if( key ==  'LEFT' && !that.map.hasCollision(that.player.getPosition().x-that.player.velocity, that.player.getPosition().y, 35, 35)) {
+      that.player.moveX(-1);
     }
-
-    if(data.action == 'talk' && data.nickname != that.player.getName()) {
-      that.players[data.nickname].moveTo(data.content.positionX, data.content.positionY);
+    if(key == 'RIGHT' && !that.map.hasCollision(that.player.getPosition().x+that.player.velocity, that.player.getPosition().y, 35, 35)) {
+      that.player.moveX(1);
     }
-
-    if(data.action == 'leave' && that.players[data.nickname]) {
-      that.scene.remove(that.players[data.nickname]);
-      delete that.players[data.nickname];
+    if(key == 'UP' && !that.map.hasCollision(that.player.getPosition().x, that.player.getPosition().y+that.player.velocity, 35, 35)) {
+      that.player.moveY(1);
     }
-  };
-
-  this.scene.add(this.player);
-
-  window.addEventListener('keydown', onKeydown, false);
-
-  function onKeydown(e) {
-    var key = e.keyCode;
-
-    /* A */if(key == 65) that.player.moveX(-1);
-    /* D */if(key == 68) that.player.moveX(1);
-    /* S */if(key == 83) that.player.moveY(-1);
-    /* W */if(key == 87) that.player.moveY(1);
-  }
-
-  this.up = function() { }
-
-  this.down = function() { }
-
-  this.timeToUpdate = 0.2;
-  this.timeElapsed = 0;
-
-  this.update = function() {
-    that.timeElapsed+=clock.getDelta();
-
-    if(that.timeElapsed > that.timeToUpdate) {
-      game.network.send({'action': 'talk', 'nickname': that.player.getName(), 'message': {'positionX': that.player.position.x, 'positionY': that.player.position.y} });
-      that.timeElapsed = 0;
+    if(key == 'DOWN' && !that.map.hasCollision(that.player.getPosition().x, that.player.getPosition().y-that.player.velocity, 35, 35)) {
+      that.player.moveY(-1);
     }
   }
+
+  mouseBind = function(mouse) { }
+
+  var timeToUpdate = 0;
+
+  this.update = function(){
+    that.map.update();
+
+    for(var n in that.players) {
+      that.players[n].update()
+    }
+
+    if(timeToUpdate > 2) {
+      timeToUpdate = 0;
+      game.network.sendMovement(that.player.position.x, that.player.position.y);
+    }
+
+    timeToUpdate+=0.4;
+  }
+  this.up = function(){}
+  this.down = function(){}
 }

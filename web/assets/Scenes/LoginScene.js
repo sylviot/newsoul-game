@@ -2,28 +2,71 @@ function Login(sceneManager, game) {
   this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
   this.scene = new THREE.Scene();
 
+  nickname = 'no-name';
+
   this.camera.position.set(0, 0, 100);
   game.renderer.setClearColor(0x000, 1);
 
-  function onLogin(){
-    if(!login.value) {
-      login.focus();
-      return;
-    }
+  function onTryConnect() {
+    CreateStatus();
+    StatusConnecting();
 
-    game.network.connect();
-    game.network.setCallback(function() {
-      console.log('Login connect!');
-      game.network.send({action: 'join', nickname: login.value});
-    }, function(data) {
-      console.log('Data:', data);
-      sceneManager.next();
-    }, null);
+    game.network.hook_server_connect(onConnect);
+    setTimeout(game.network.connect, 1000);
+  }
+
+  function onConnect() {
+    StatusConnected();
+    CreateForm();
+  }
+
+  function onTryLogin() {
+    game.network.hook_login_account(onLogin, onFailLogin);
+    game.network.loginAccount(nickname, nickname);
+  }
+
+  function onLogin() {
+    game.network.hook_load_character(onLoadCharacter);
+    game.network.loadCharacter(nickname);
+  }
+  
+  function onFailLogin() {
+    StatusFailConnection();
+  }
+
+  function onLoadCharacter() {
+    sceneManager.next();
   }
 
   var login = document.createElement('input');
   var login_text = document.createElement('h1');
   var login_button = document.createElement('button');
+  var login_status = document.createElement('h1');
+
+  function CreateStatus() {
+    login_status.style.position = 'fixed';
+    login_status.style.top = '50%';
+    login_status.style.width = '100%';
+    login_status.style.fontSize = '15px';
+    login_status.style.textAlign = 'center';
+
+    document.body.appendChild(login_status);
+  }
+
+  function StatusConnecting() {
+    login_status.style.color = 'green';
+    login_status.innerHTML = 'Conectando ao servidor...';
+  }
+
+  function StatusConnected() {
+    login_status.style.color = 'green';
+    login_status.innerHTML = 'Conectado!';
+  }
+
+  function StatusFailConnection() {
+    login_status.style.color = 'red';
+    login_status.innerHTML = 'Sem conexão!';
+  }
 
   function CreateForm() {
     login.style.position = 'fixed';
@@ -53,24 +96,26 @@ function Login(sceneManager, game) {
     document.body.appendChild(login_text);
     document.body.appendChild(login_button);
 
-    login_button.addEventListener('click', onLogin, false);
-    login.addEventListener('keydown', function(e) {
-      if(e.keyCode == 13) {
-        onLogin();
-      }
-    }, false);
+    login_button.addEventListener('click', onSubmit, false);
+    login.addEventListener('keydown', function(e) { if(e.keyCode == 13) { onSubmit(); } }, false);
+
+    function onSubmit(){
+      nickname = login.value;
+      onTryLogin();
+    }
 
     login.focus();
   }
 
   this.up = function() {
-    CreateForm();
+    onTryConnect();
   }
 
   this.down = function() {
     login.remove();
     login_text.remove();
     login_button.remove();
+    login_status.remove();
   }
  
   this.update = function(){}
