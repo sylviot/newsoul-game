@@ -3,17 +3,24 @@ var gulp = require('gulp'),
     livereload = require('gulp-livereload'),
     minify = require('gulp-minify'),
     uglify = require('gulp-uglify'),
+    rename = require('gulp-rename'),
     debug = require('gulp-debug');
 
 var files = [
-  './web/assets/Enemy.js', './web/assets/Map.js', './web/assets/NPC.js', './web/assets/Player.js',
+  './web/assets/BugReport.js',
+  './web/assets/Camera.js',
+  './web/assets/Chat.js',
+  './web/assets/Control.js',
+  './web/assets/Map.js',
+  './web/assets/Player.js',
+  './web/assets/Text.js',
   './web/assets/Scenes/*.js',
   './web/assets/Network.js',
 ];
 
 gulp.task('prod', function(){
   var filesProduction = files;
-  filesProduction.push('./web/assets/Game.js');
+  filesProduction.push('./web/assets/Logic.js');
 
   return gulp.src(filesProduction)
   .pipe(concat('game.js'))
@@ -21,11 +28,16 @@ gulp.task('prod', function(){
 });
 
 gulp.task('dev', function(){
-  var filesDev = files;
-  filesDev.push('./web/assets/GameDev.js');
+  var filesDev = [
+    './web/assets/Map.js',
+    './web/assets/Player.js'
+  ];
 
   return gulp.src(filesDev)
   .pipe(concat('game-dev.js'))
+  .pipe(gulp.dest('./web/'))
+  .pipe(rename('game-dev.min.js'))
+  .pipe(uglify())
   .pipe(gulp.dest('./web/'));
 });
 

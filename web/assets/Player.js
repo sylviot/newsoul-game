@@ -1,14 +1,13 @@
 function Player(name) {
+  var that = this;
   var texture = new THREE.ImageUtils.loadTexture('resources/player.png'),
       material = new THREE.MeshBasicMaterial({color: 0xfff, map: texture}),
-      geometry = new THREE.PlaneGeometry(32, 32),
+      geometry = new THREE.PlaneGeometry(35, 35),
       mesh = new THREE.Mesh(geometry, material);
 
-  var text = new Text(name);
-  mesh.add(text);
-
+ 
   var new_position = {x:300, y:45, z:0};
-  mesh.velocity = 5.5;
+  mesh.velocity = 5;
   mesh.height = 35;
   mesh.width = 35;
 
@@ -33,8 +32,13 @@ function Player(name) {
     new_position.y = y;
   }
 
+  mesh.setName = function(name) { 
+    that.name = name;
+    that.textName = new Text(name);
+    mesh.add(that.textName);
+  }
 
-  mesh.getName = function() { return name; }
+  mesh.getName = function() { return that.name; }
   mesh.getPosition = function() { return new_position; }
 
   mesh.keyboardBind = function(key) {
