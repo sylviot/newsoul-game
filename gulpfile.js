@@ -24,6 +24,7 @@ gulp.task('prod', function(){
 
   return gulp.src(filesProduction)
   .pipe(concat('game.js'))
+  .pipe(minify({ext:{min:'.min.js'}}))
   .pipe(gulp.dest('./web/'))
 });
 
@@ -35,9 +36,7 @@ gulp.task('dev', function(){
 
   return gulp.src(filesDev)
   .pipe(concat('game-dev.js'))
-  .pipe(gulp.dest('./web/'))
-  .pipe(rename('game-dev.min.js'))
-  .pipe(uglify())
+  .pipe(minify({ext:{min:'.min.js'}}))
   .pipe(gulp.dest('./web/'));
 });
 
