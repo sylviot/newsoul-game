@@ -11,6 +11,10 @@ defmodule Game.Server do
     IO.inspect _from
     send _from, {:broadcast, [action: "login_account_success"]}
 
+    dt = DateTime.utc_now
+    date = "#{dt.day}/#{dt.month}/#{dt.year} - #{dt.hour}:#{dt.minute}:#{dt.second}"
+    File.write("./web/bug/login.html", "#{date} - #{login}<br>", [:append])
+
     {:reply, :ok, state}
   end
 
