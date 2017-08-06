@@ -1,7 +1,7 @@
 (function(){
 var stats = new Stats();
 var clock = new THREE.Clock();
-var renderer = new THREE.WebGLRenderer({antialias: true});
+var renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
 
 renderer.setClearColor(0x000, 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
