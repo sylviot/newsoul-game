@@ -14,6 +14,7 @@ function Map(id) {
   this.enemies = [];
   this.backgrounds = [];
   this.npcs = [];
+  this.teleports = [];
 
   this.load = function() {
     that.camera.setPosition(0, 0, 700);
@@ -178,14 +179,16 @@ function Map(id) {
     that.tiles = data.tiles;
 
     that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
+    that.addTeleport({id: 'teleport_1_2', x:100, y: 36, toX: 1300, toY: 36});
+    that.addTeleport({id: 'teleport_2_1', x:1300, y: 36, toX: 100, toY: 36});
   }
 
   this.update = function() {
     that.camera.update();
     that.player.update();
 
-    for(var i in that.players) {
-      that.players[i].update();
+    for(var e of this.scene.children) {
+      if(typeof(e.update) === "function") e.update();
     }
   }
 
@@ -226,7 +229,26 @@ function Map(id) {
 
     that.scene.add(mesh); 
   }
-  this.addTeleport = function() {}
+  this.tryTeleport = function(x, y) {
+    for(var t of this.teleports) {
+      if(t.x <= x && t.x+35 >= x) {
+        return {isTeleported: true, x: t.toX, y: t.toY};
+      }
+    }
+
+    return false;
+  }
+  this.addTeleport = function(teleport) {
+    this.teleports.push(teleport);
+
+    var texture = new THREE.ImageUtils.loadTexture('resources/player.png'),
+      material = new THREE.MeshBasicMaterial({map: texture}),
+      mesh = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), material);
+      console.log(texture, material, mesh)
+
+      mesh.position.set(teleport.x, teleport.y, 0);
+      this.scene.add(mesh);
+  }
   this.addTile = function(tile) {
       var texture = that.materials[tile.material],
           material  = new THREE.MeshBasicMaterial({map: texture}),
