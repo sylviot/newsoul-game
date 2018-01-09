@@ -4,12 +4,20 @@
   <meta charset="UTF-8">
   <title>New Soul - GAME</title>
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <link rel="stylesheet" href="/engines/three.css">
-  <script src="/engines/three.min.js"></script>
-  <script src="/engines/three.stats.min.js"></script>
+  <!--data-main="AppBootstrap"-->
+  <script src="/engines/requirejs.js"></script>
+  
+  <!-- <link rel="stylesheet" href="/engines/three.css"> -->
+  <!-- <script src="/engines/three.min.js"></script> -->
+  <!-- <script src="/engines/three.stats.min.js"></script> -->
+  <script src="/game.js"></script>
+  <script>
+      require(['Main'], function(mod) {
+        mod.Main.run()
+      });
+    </script>
 </head>
 <body>
   <div class="fps"> <canvas width="80" height="48"></canvas> </div>
-  <script src="/game.js"></script>
 </body>
 </html>
