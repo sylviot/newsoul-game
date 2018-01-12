@@ -1,22 +1,22 @@
 export class Control {
   private _hotkeys: Array<string>
 
-  constructor(_onKeyboardBind, _onMouseBind) {
+  constructor(_scene: IScene) {
     this._hotkeys = new Array<string>()
     
     let that = this
 
     document.body.onkeydown = function(_event){ 
-      console.log(_event.keyCode)
       let hotkey = that._hotkeys[_event.keyCode]
+      
       if(hotkey)
-        _onKeyboardBind(hotkey)
+        _scene._keyboadEvent(hotkey)
     }
     
     
     // document.body.onmouseover = function(_event){ that.mouseEvent(_event) })
-    document.body.oncontextmenu = function(_event) { _event.preventDefault(); _onKeyboardBind('RIGHT CLICK') }
-    document.body.onclick = function(_event){ _event.preventDefault(); _onKeyboardBind('LEFT CLICK') }
+    document.body.oncontextmenu = function(_event) { _event.preventDefault(); _scene._mouseEvent('RIGHT CLICK') }
+    document.body.onclick = function(_event){ _event.preventDefault(); _scene._mouseEvent('LEFT CLICK') }
   }
 
   loadDefaultHotkeys(_data: any) {
