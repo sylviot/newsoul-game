@@ -1,5 +1,10 @@
-import * as THREE from "./engines/three.min"
+import * as THREE from 'three'
 import { Game } from './Game'
+
+
+export function lerp( x, y, t ) {
+  return ( 1 - t ) * x + t * y;
+}
 
 export class Main {
   static next(_scenes, _sceneCurrent): number {
@@ -13,7 +18,7 @@ export class Main {
     let sceneCurrent = -1
 
     sceneCurrent = this.next(scenes, sceneCurrent)
-    var instance = new scenes[sceneCurrent]();
+    var instance = (new scenes[sceneCurrent](this));
 
     var animate = function () {
       requestAnimationFrame( animate );

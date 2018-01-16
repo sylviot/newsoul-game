@@ -1,7 +1,9 @@
-// import * as THREE from "three"
-import * as THREE from "./engines/three.min"
-import { Game } from './Game'
+import * as THREE from "three"
 
+import { Game } from './Game'
+import { lerp } from './Main'
+
+import { IElement } from './Interface'
 
 export class Player implements IElement {
 
@@ -80,7 +82,7 @@ export class Player implements IElement {
   update(_delta: number): void {
     this._delta = _delta
 
-    this.mesh.position.x = THREE.Math.lerp(this.mesh.position.x, this._x, 0.2)
+    this.mesh.position.x = lerp(this.mesh.position.x, this._x, 0.2)
   }
 
   /* GET/SET */

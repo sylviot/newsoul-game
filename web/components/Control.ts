@@ -1,3 +1,5 @@
+import { IScene } from './Interface'
+
 export class Control {
   private _hotkeys: Array<string>
 

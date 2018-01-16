@@ -1,5 +1,5 @@
-import * as THREE from "./engines/three.min"
-// import * as THREE from 'three'
+import * as THREE from 'three'
+
 export class Camera {
   
   static basic(): any {

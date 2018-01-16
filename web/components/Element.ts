@@ -1,6 +1,6 @@
-// import * as THREE from "three"
-import * as THREE from "./engines/three.min"
+import * as THREE from "three"
 import { Game } from './Game'
+import { IElement, IScene } from './Interface'
 
 export class Element implements IElement {
   private _x: number

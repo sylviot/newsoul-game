@@ -1,12 +1,12 @@
-// import * as THREE from "three"
-import * as THREE from "./engines/three.min"
-
+import * as THREE from "three"
 
 import { Camera } from './Camera'
 import { Control } from './Control'
-import { Main } from './Main'
+import { Main, lerp } from './Main'
 import { Map } from './Map'
 import { Player } from './Player'
+
+import { IScene } from './Interface'
 
 const RESOURCES_PATH = './resources/'
 
@@ -139,7 +139,7 @@ export class Game implements IScene
     this.player.update(delta)
 
     // ToDo - Camera following IElement
-    this.camera.position.x = THREE.Math.lerp(this.camera.position.x, this.player.x, 0.07)
+    this.camera.position.x = lerp(this.camera.position.x, this.player.x, 0.07)
   }
 
   /* EVENTS */
@@ -156,7 +156,7 @@ export class Game implements IScene
   /* RESOURCES METHODS */
   tryLoadTexture(_name: string, _sprite: string = '') {
     if(!this.resources[_name]) {
-      let texture = new THREE.ImageUtils.loadTexture(`${RESOURCES_PATH}${_sprite}`);
+      let texture = THREE.ImageUtils.loadTexture(`${RESOURCES_PATH}${_sprite}`);
       texture.minFilter = THREE.LinearFilter;
       
       this.resources[_name] = texture;      

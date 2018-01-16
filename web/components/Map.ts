@@ -1,5 +1,4 @@
-// import * as THREE from "three"
-import * as THREE from "./engines/three.min"
+import * as THREE from "three"
 
 import { Element } from './Element'
 import { Game } from './Game'
@@ -33,7 +32,7 @@ export class Map {
     for(let item of _data.collisions) {
       let mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(35, 35),
-        new THREE.MeshBasicMaterial({transparecent: true, color: 0x00ff})
+        new THREE.MeshBasicMaterial({transparent: true, color: 0x00ff})
       )
       
       mesh.position.set(item.x, item.y, 2)
