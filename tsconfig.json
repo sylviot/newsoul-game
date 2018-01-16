@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+      "target": "es6",
+      "module": "amd",
+      "moduleResolution": "node",
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "preserveConstEnums": true,
+      "suppressImplicitAnyIndexErrors": true,
+      "outFile": "game.js",
+      "outDir": "./engines"
+  },
+  "awesomeTypescriptLoaderOptions": {
+      "useWebpackText": true,
+      "forkChecker": true,
+      "useCache": true
+  },
+  "exclude": [
+      "node_modules",
+      "lib"
+  ],
+  "compileOnSave": true,
+  "buildOnSave": false,
+  "atom": {
+      "rewriteTsconfig": false
+  }
+}
