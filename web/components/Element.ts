@@ -2,46 +2,63 @@
 import * as THREE from "./engines/three.min"
 import { Game } from './Game'
 
-export class Element {
+export class Element implements IElement {
   private _x: number
   private _y: number
   private _width: number
   private _height: number
+  private _rotation: number
 
   private _texture: any
   private _material: any
   private _mesh: any
 
-  constructor (public game: Game, private _data: any) {
+  constructor (public _scene: IScene) {
+  }
+
+  loadData(_data: any) {
     if(_data.type == 'tile') {
-      this.makeTile(_data)
+      this._width = 35
+      this._height = 35
+
+      this.make(_data)
     }
     else if (_data.type == 'background') {
-      this.makeBg(_data)
+      this._width = 1200
+      this._height = 600
+      this._rotation = 0.05
+
+      this.make(_data)
     }
+    else if (_data.type == 'fixed') {
+      this._width = 177
+      this._height = 300
+      // this._rotation = 0.2
+
+      this.make(_data)
+    }
+  }
+
+  updateData(_data: any) {
+  }
+
+  update(_delta: number) {
+    // this.mesh.rotation.z = THREE.Math.lerp(this.mesh.rotation.z, Math.random() * 6 - 3, 0.01)
   }
 
   // Smell code below :X
 
-  makeTile(_data: any) {
-    this._texture = this.game.tryLoadTexture(_data.material)
-    this._material = new THREE.MeshBasicMaterial({map: this._texture})
-    this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/35,35), this._material)
+  make(_data: any) {
+    this._texture = this._scene.tryLoadTexture(_data.material)
+    this._material = new THREE.MeshBasicMaterial({map: this._texture, transparent: true})
+    this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(this._width, this._height), this._material)
 
     this._x = _data.x
     this._y = _data.y;
 
     this.mesh.position.set(_data.x, _data.y, _data.z);
-  }
-
-  makeBg(_data: any) {
-    this._texture = this.game.tryLoadTexture(_data.material)
-    this._material = new THREE.MeshBasicMaterial({map: this._texture, transparent: true})
-    this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/1200,610), this._material)
-
-    this._x = _data.x + 10000
-    this._y = _data.y
-    this.mesh.position.set(_data.x, _data.y, _data.z);
+    
+    this.mesh.rotation.z = this._rotation || 0
   }
 
   overlap(_x: number, _y: number): boolean {
