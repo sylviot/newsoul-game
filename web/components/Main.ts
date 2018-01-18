@@ -1,33 +1,74 @@
 import * as THREE from 'three'
-import { Game } from './Game'
+
+import { GameScene } from './Scenes/Game'
+import { InitializeScene } from './Scenes/Initialize'
+import { Test } from './Test'
+import { IScene } from './Interface';
 
 
+/* ToDo - Função básica para movimentação (move para Helpers) */
 export function lerp( x, y, t ) {
   return ( 1 - t ) * x + t * y;
 }
 
 export class Main {
-  static next(_scenes, _sceneCurrent): number {
-    _sceneCurrent = (_sceneCurrent+1) % _scenes.length
-    return _sceneCurrent
+  private _scenes: any
+  private _sceneCurrent: IScene
+  private _sceneIndex: number
+
+  private _renderer: any
+
+  constructor() {
+    this._renderer = new THREE.WebGLRenderer({antialias: true/*, preserveDrawingBuffer: true*/});
+    this._renderer.setClearColor(0x000, 1);
+    this._renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(this._renderer.domElement);
+    
+    this._scenes = new Array(
+      InitializeScene,
+      GameScene,
+    );
+
+    this._sceneIndex = -1;
+    this.next()
   }
 
-  static run(): void {
-    console.log('RUNNNNING!')
-    let scenes = [Game]
-    let sceneCurrent = -1
+  next(): void {
+    if(this.sceneCurrent) {
+      this.sceneCurrent.down()
+    }
 
-    sceneCurrent = this.next(scenes, sceneCurrent)
-    var instance = (new scenes[sceneCurrent](this));
+    let _sceneCount = this._scenes.length
+    
+    this._sceneIndex = (this._sceneIndex + 1) % _sceneCount
+    this._sceneCurrent = new this._scenes[this._sceneIndex](this)
+
+    this.sceneCurrent.up()
+  }
+  
+  run(): void {
+    let instance = this
 
     var animate = function () {
       requestAnimationFrame( animate );
       
-      // instance.renderer.render( instance.scene, instance.camera )
       instance.update();
       instance.render();
     };
 
     animate();
+  }
+
+  public update(): void {
+    this.sceneCurrent.update()
+  }
+
+  public render(): void {
+    this.sceneCurrent.render()
+    this._renderer.render(this.sceneCurrent.scene, this.sceneCurrent.camera)
+  }
+
+  get sceneCurrent() {
+    return this._sceneCurrent
   }
 }
