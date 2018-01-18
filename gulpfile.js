@@ -11,7 +11,7 @@ gulp.task('scripts', function() {
 
 gulp.task('watch', function() {
   // livereload.listen()
-  return gulp.watch('./web/components/*', ['scripts'])
+  return gulp.watch('./web/components/**/*.ts', ['scripts'])
 })
 
 gulp.task('default', ['watch', 'scripts'])
