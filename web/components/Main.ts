@@ -1,9 +1,12 @@
 import * as THREE from 'three'
 
+import { IScene } from './Interface';
+
 import { GameScene } from './Scenes/Game'
 import { InitializeScene } from './Scenes/Initialize'
-import { Test } from './Test'
-import { IScene } from './Interface';
+import { LoginScene } from './Scenes/Login'
+import { SplashScene } from './Scenes/Splash'
+import { TestScene } from './Scenes/Test'
 
 
 /* ToDo - Função básica para movimentação (move para Helpers) */
@@ -25,7 +28,9 @@ export class Main {
     document.body.appendChild(this._renderer.domElement);
     
     this._scenes = new Array(
+      SplashScene,
       InitializeScene,
+      LoginScene,
       GameScene,
     );
 
