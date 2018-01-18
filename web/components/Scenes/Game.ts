@@ -1,17 +1,18 @@
 import * as THREE from "three"
 
-import { Camera } from './Camera'
-import { Control } from './Control'
-import { Main, lerp } from './Main'
-import { Map } from './Map'
-import { Player } from './Player'
+import { Camera } from '../Camera'
+import { Control } from '../Control'
+import { Main, lerp } from '../Main'
+import { Map } from '../Map'
+import { Player } from '../Player'
 
-import { IScene } from './Interface'
+import { IScene } from '../Interface'
 
 const RESOURCES_PATH = './resources/'
 
-export class Game implements IScene
+export class GameScene implements IScene
 {
+
   protected elements: any
   protected map: Map
   protected player: Player
@@ -19,22 +20,15 @@ export class Game implements IScene
   public camera: any
   public clock: any
   public control: Control
-  public renderer: any
   public resources: Array<any>
   public scene: any
 
   
-  constructor(main: Main) {
+  constructor(public _main: Main) {
     this.clock = new THREE.Clock();
     this.scene = new THREE.Scene()
-    // this.camera = new THREE.PerspectiveCamera(65, window.devicePixelRatio, 0.1, 2000)
     this.camera = new THREE.OrthographicCamera(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 1, 100);
-    this.renderer = new THREE.WebGLRenderer({antialias: false})//, preserveDrawingBuffer: true})
 
-    this.renderer.setClearColor(0x000, 1)
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-
-    document.body.appendChild(this.renderer.domElement)
     let that = this
 
     let hotkeys = [
@@ -129,7 +123,6 @@ export class Game implements IScene
   }
   
   render(): void {
-    this.renderer.render(this.scene, this.camera)
   }
 
   update(): void { 
@@ -141,7 +134,14 @@ export class Game implements IScene
     // ToDo - Camera following IElement
     this.camera.position.x = lerp(this.camera.position.x, this.player.x, 0.07)
   }
-
+  
+  down(): void {
+    console.log('down')
+  }
+  up(): void {
+    console.log('up')    
+  }
+  
   /* EVENTS */
   _keyboadEvent(_hotkey: string) {
     if (_hotkey == "LEFT" || _hotkey == "RIGHT")
