@@ -1,7 +1,7 @@
 import * as THREE from "three"
 
 import { Element } from './Element'
-import { Game } from './Game'
+import { IScene, IElement } from "./Interface";
 
 const RESOURCES_PATH = './resources/'
 
@@ -17,9 +17,17 @@ export class Map {
   private npcs: Array<any>
   private textures: any
   private teleports: Array<any>
+
+  private collision: any
   
-  constructor(public game: Game){
-    
+  constructor(public game: IScene){
+    this.collision = new THREE.Mesh(
+      new THREE.PlaneGeometry(35, 35),
+      new THREE.MeshBasicMaterial({transparent: true, color: 0x3dc0d3})
+    )
+
+    this.collision.position.set(0, 0, 4)
+    this.game.scene.add(this.collision)    
   }
 
   build(_data: any): void {
@@ -56,18 +64,37 @@ export class Map {
     });
   }
 
-  collision(_x: number, _y: number, _width: number, _height: number): boolean {
-    let hasCollision = false
-
-    this._collisions.forEach(item => {
-      if((_x+_width/2) < (item.x-17.5) || (_x-_width/2) > (item.x+17.5))
-        return
-      else
-        hasCollision = true
-    })
-    console.log(hasCollision)
-    return hasCollision
+  hasUpCollision(_element: IElement, _acceleration: any, tile: any, SIZE: number = 35): boolean {
+    return _element.y+_acceleration.y-_element.height > tile.y
   }
+  hasDownCollision(_element: IElement, _acceleration: any, tile: any, SIZE: number = 35): boolean {
+    return _element.y+_acceleration.y < tile.y-SIZE
+  }
+  hasLeftCollision(_element: IElement, _acceleration: any, tile: any, SIZE: number = 35): boolean {
+    return _element.x+_acceleration.x+_element.width  < tile.x
+  }
+  hasRightCollision(_element: IElement, _acceleration: any, tile: any, SIZE: number = 35): boolean {
+    return _element.x+_acceleration.x > tile.x+SIZE
+  }
+  
+  hasCollision(_element: IElement, _acceleration: any): boolean {
+    let SIZE = 35
+    
+    for(let tile of this._collisions) {
+      let up = this.hasUpCollision(_element, _acceleration, tile),
+      down = this.hasDownCollision(_element, _acceleration, tile),
+      left = this.hasLeftCollision(_element, _acceleration, tile),
+      right = this.hasRightCollision(_element, _acceleration, tile)
+      
+      if( ! ((left || right) || (up || down)) )
+        return true
+    }
+    
+    return false
+  }
+  
+  applyCollision(_element: IElement): void { }
+  applyGravity(_element: IElement): void { }
 
   get elements() {
     return this._elements
