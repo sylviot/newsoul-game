@@ -35,7 +35,7 @@ export class Network {
       return null
     }
     
-    return this._socket.send(_data)
+    return this._socket.send(JSON.stringify(_data))
   }
   
   public state() {
@@ -67,7 +67,7 @@ export class Network {
 
   /* GET SET AND GLOBAL */
   private isClosed() {
-    return (!this._socket || !(this._socket instanceof WebSocket && this._socket.readyState == WebSocket.CLOSED))
+    return (!this._socket || (this._socket instanceof WebSocket && this._socket.readyState == WebSocket.CLOSED))
   }
 
   get url() {
