@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 
+import { Network } from './Network'
+
 import { IScene } from './Interface';
 
 import { GameScene } from './Scenes/Game'
@@ -19,17 +21,20 @@ export class Main {
   private _sceneCurrent: IScene
   private _sceneIndex: number
 
+  private _network: Network
   private _renderer: any
 
   constructor() {
+    this._network = new Network()
+    
     this._renderer = new THREE.WebGLRenderer({antialias: true/*, preserveDrawingBuffer: true*/});
     this._renderer.setClearColor(0x000, 1);
     this._renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this._renderer.domElement);
     
     this._scenes = new Array(
-      SplashScene,
       InitializeScene,
+      SplashScene,
       LoginScene,
       GameScene,
     );
@@ -73,6 +78,12 @@ export class Main {
     this._renderer.render(this.sceneCurrent.scene, this.sceneCurrent.camera)
   }
 
+  get network() {
+    return this._network
+  }
+  get renderer() {
+    return this._renderer
+  }
   get sceneCurrent() {
     return this._sceneCurrent
   }
