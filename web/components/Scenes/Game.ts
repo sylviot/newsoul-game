@@ -16,18 +16,21 @@ export class GameScene implements IScene
   protected elements: any
   protected map: Map
   protected player: Player
+
+  private players: any
   
   public camera: any
-  public clock: any
+  public clock: THREE.Clock
   public control: Control
   public resources: Array<any>
   public scene: any
 
   
   constructor(public _main: Main) {
-    this.clock = new THREE.Clock();
+    this.clock = new THREE.Clock()
     this.scene = new THREE.Scene()
-    this.camera = new THREE.OrthographicCamera(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 1, 100);
+    this.camera = new THREE.OrthographicCamera(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 1, 100)
+
 
     let that = this
 
@@ -41,7 +44,7 @@ export class GameScene implements IScene
 
     let info = {
       name: '[ADM] SylvioT',
-      position: { x: 36, y: 35  },
+      position: { x: 900, y: 320  },
       velocity: 1.45,
       level: 1,
       experience: 1,
@@ -63,6 +66,7 @@ export class GameScene implements IScene
           {name: 'bg_0', sprite: 'backgrounds/bg_0.png', width: 700, height: 200},
           {name: 'bg_hill_0', sprite: 'backgrounds/hill.png', width: 1200, height: 610},
           {name: 'pillar', sprite: 'backgrounds/pillar.png', width: 361, height: 593},
+          {name: 'crystal', sprite: 'backgrounds/crystal.png', width: 361, height: 593},
         ],
         elements: [
           {type: 'tile', material: 'tile_0', x: 0, y: 0, z: -1},
@@ -71,29 +75,56 @@ export class GameScene implements IScene
           {type: 'tile', material: 'tile_0', x: 105, y: 0, z: -1},
           {type: 'tile', material: 'tile_0', x: 140, y: 0, z: -1},
           {type: 'tile', material: 'tile_0', x: 175, y: 0, z: -1},
-          {type: 'fixed', material: 'pillar', x: -255, y: 166, z: -1},
-          {type: 'fixed', material: 'pillar', x: -85, y: 166, z: -1},
-          {type: 'fixed', material: 'pillar', x: 85, y: 166, z: -1},
-          {type: 'fixed', material: 'pillar', x: 255, y: 166, z: -1},
+          {type: 'tile', material: 'tile_0', x: 210, y: 0, z: -1},
+          {type: 'tile', material: 'tile_0', x: 245, y: 0, z: -1},
+          {type: 'tile', material: 'tile_0', x: 280, y: 0, z: -1},
+          {type: 'tile', material: 'tile_0', x: 315, y: 0, z: -1},
+          {type: 'fixed', material: 'pillar', x: 900, y: 169, z: -1},
+          {type: 'fixed', material: 'crystal', x: 900, y: 480, z: -1},
+          {type: 'background', material: 'bg_0', x: 0, y: -600, z: -3},
           {type: 'background', material: 'bg_0', x: 0, y: 0, z: -3},
-          {type: 'background', material: 'bg_hill_0', x: 450, y: -132, z: -2},
-          {type: 'background', material: 'bg_hill_0', x: -750, y: -200, z: -2},
+          {type: 'background', material: 'bg_0', x: 0, y: 600, z: -3},
+          {type: 'background', material: 'bg_0', x: 1200, y: -400, z: -3},
+          {type: 'background', material: 'bg_0', x: 1200, y: 200, z: -3},
+          {type: 'background', material: 'bg_0', x: 1200, y: 800, z: -3},
+          {type: 'background', material: 'bg_hill_0', x: 300, y: 132, z: -2},
+          {type: 'background', material: 'bg_hill_0', x: 1500, y: 200, z: -2},
         ],
         collisions: [
-          {x: -35, y: 105},
-          {x: -35, y: 70},
-          {x: -35, y: 35},
-          {x: -35, y: 0},
-          // {x: 0, y: 0},
-          // {x: 35, y: 0},
-          // {x: 70, y: 0},
-          // {x: 105, y: 0},
-          {x: 140, y: 0},
+          /* platforms */
+          {x:140,y:140},
+          {x:175,y:140},
+          {x:210,y:140},
+          {x:245,y:140},
+
+          {x:385,y:245},
+          {x:420,y:245},
+          {x:455,y:245},
+          {x:490,y:245},
+
+          {x:630,y:140},
+          {x:665,y:140},
+          {x:700,y:140},
+          {x:735,y:140},
+
+          {x:1015,y:140},
+          {x:1050,y:140},
+          {x:1085,y:140},
+          {x:1120,y:140},
         ]
       },
       camera: {
         position: { x: 0, y: 0, z: 10 }
       },
+    }
+
+    for(let i=0;i<10*4;i++) {
+      data.map.collisions.push({x:35*i, y:0})
+    }
+
+    for(let i=0;i<10;i++) {
+      data.map.collisions.push({x:0, y:i*35})
+      data.map.collisions.push({x:1400, y:i*35})
     }
 
     this.resources = new Array<any>()
@@ -103,6 +134,29 @@ export class GameScene implements IScene
     this.player = new Player(this)
     this.player.loadData(info)
     this.scene.add(this.player.mesh)
+
+    this._main.network.send({
+      action: 'load_character', 
+      character_id: 'Player-' + ~~(Math.random() * 999999)
+    })
+
+    this.players = [];
+    
+    this._main.network.hook('join', (_data) => {
+      this.players[_data.nickname] = new Player(this)
+      this.players[_data.nickname].loadData({
+        name: _data.nickname,
+        position: { x: 900, y: 320  }
+      })
+      
+      this.scene.add(this.players[_data.nickname].mesh)
+      console.log(_data, this.scene)
+    })
+
+    this._main.network.hook('movement', (_data) => {
+      if(this.players[_data.nickname])
+        this.players[_data.nickname].updatePosition(_data.x, _data.y)
+    })
     
     data.map.materials.forEach(item => {
       this.tryLoadTexture(item.name, item.sprite)
@@ -115,15 +169,12 @@ export class GameScene implements IScene
     this.camera.position.y = data.camera.position.y
     this.camera.position.z = data.camera.position.z
   }
-  
-  /* Run method */
-  run(): void {
-    // ToDo - verificar elementos essenciais para rodar
     
-  }
-  
   render(): void {
   }
+
+  velocityV: number = 0
+  velocityH: number = 0
 
   update(): void { 
     let delta = this.clock.getDelta()
@@ -131,8 +182,47 @@ export class GameScene implements IScene
     this.map.update(delta)
     this.player.update(delta)
 
+    for(let id in this.players) {
+      this.players[id].update(delta)
+    }
+
     // ToDo - Camera following IElement
     this.camera.position.x = lerp(this.camera.position.x, this.player.x, 0.07)
+    this.camera.position.y = lerp(this.camera.position.y, this.player.y, 0.07)
+
+
+    // ToDo - check if element is grounded nor collision (wrong)
+    if( this.map.hasCollision(this.player, {x:0, y: this.velocityV}) ) {
+      this.velocityV = -this.map.gravity * delta
+
+      if (this.control.isPressed('SPACE')) 
+        { this.velocityV = this.player.jumpForce }
+      
+    } 
+    else {
+      this.velocityV -= this.map.gravity * delta
+    }
+
+    if (this.control.isPressed('LEFT'))
+      this.velocityH = this.player.moveLEFT().x
+
+    if (this.control.isPressed('RIGHT'))
+      this.velocityH = this.player.moveRIGHT().x
+
+    if( ! this.map.hasCollision(this.player, {x:0, y:this.velocityV}) ) {
+      this.player.move('JUMP', {x:0, y:this.velocityV} )
+    }
+
+    if( ! this.map.hasCollision(this.player, {x:this.velocityH, y:0}) ) {
+      this.player.move('MOVE', {x:this.velocityH, y:0} )
+      this.velocityH = 0
+    }
+
+    this._main.network.send({
+      action: 'movement',
+      x: this.player.x,
+      y: this.player.y
+    })
   }
   
   down(): void {
@@ -143,15 +233,9 @@ export class GameScene implements IScene
   }
   
   /* EVENTS */
-  _keyboadEvent(_hotkey: string) {
-    if (_hotkey == "LEFT" || _hotkey == "RIGHT")
-      if(!this.map.collision(this.player.x, 0, this.player.width, this.player.height))
-        this.player.move(_hotkey)
-  }
-
-  _mouseEvent(_event) {
-    console.log(_event)
-  }
+  /* ToDo - need adjust keyboard/mouse event */
+  _keyboadEvent(_hotkey: string) {  }
+  _mouseEvent(_event) {  }
 
   /* RESOURCES METHODS */
   tryLoadTexture(_name: string, _sprite: string = '') {

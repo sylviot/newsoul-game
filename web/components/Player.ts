@@ -1,12 +1,11 @@
 import * as THREE from "three"
 
-import { Game } from './Game'
+import { GameScene } from './Scenes/Game'
 import { lerp } from './Main'
 
-import { IElement } from './Interface'
+import { IElement, IScene } from './Interface'
 
 export class Player implements IElement {
-
   private _name: string
   private _level: number
   private _experience: number
@@ -21,6 +20,9 @@ export class Player implements IElement {
   private _y: number
   private _width: number
   private _height: number
+  private _rotation: number
+  private _jumpForce: number = 9.55
+  private _acceleration: number = 3.5
 
 
   private _texture: any
@@ -28,7 +30,10 @@ export class Player implements IElement {
   private _mesh: any
   
 
-  constructor(public game: Game) {
+  constructor(public _scene: IScene) {
+    this._width = 35
+    this._height = 35
+    
     this.loadBasicMesh()
   }
   
@@ -36,20 +41,21 @@ export class Player implements IElement {
     this.changeName(_data.name)
     // this.changeLevel(_data.level)
     // this.changeExperience(_data.experience)
-    this.changePosition(_data.position);
+    this.updatePosition(_data.position.x, _data.position.y);
     // this.changeAttributes(_data.attributes);
   }
 
-  updateData(_data: any): void {
+  updateData(_data: any): void { }
 
+  updatePosition(_x: number, _y: number): void {
+    this._x = _x
+    this._y = _y
   }
 
   private loadBasicMesh(): void {
-    this._texture = this.game.tryLoadTexture('tile_0', 'player.png')
+    this._texture = new THREE.TextureLoader().load('resources/player.png')
     this._material = new THREE.MeshBasicMaterial({map: this._texture, color: 0x3dc0d3})
-    this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/35,35), this._material)
-
-    this._mesh.position.set(13,35,1);
+    this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/32,32), this._material)
   }
 
   changeName(_newName: string) {
@@ -60,34 +66,27 @@ export class Player implements IElement {
     this._y = _newPosition.y
   }
 
-  _delta: number = 1
-  _speed: number = 0.3
-  _maxSpeed: number = 10
-  _acceleration: number = 5.85
-  _deceleration: number = 0.15
-
-  move(_direction: string) {
-    if (_direction == "LEFT")
-      this._x -= this._acceleration
-    else if(_direction == "RIGHT")
-      this._x += this._acceleration
+  move(_direction: string, _acceleration: any) {
+    this._x += _acceleration.x
+    this._y += _acceleration.y
   }
 
-  moveX() {
-    let x = this._mesh.position.x + this._speed
-
-    this.changePosition({x: x, y: this.mesh.position.y})
+  moveLEFT() {
+    return {x: -this._acceleration, y: 0}
+  }
+  moveRIGHT() {
+    return {x: this._acceleration, y: 0}
   }
 
   update(_delta: number): void {
-    this._delta = _delta
-
-    this.mesh.position.x = lerp(this.mesh.position.x, this._x, 0.2)
+    this.mesh.position.x = this._x;//lerp(this.mesh.position.x, this._x, 0.3)
+    this.mesh.position.y = this._y;//lerp(this.mesh.position.y, this._y, 0.9)
+    this.mesh.position.z = 2
   }
 
   /* GET/SET */
   get experience() {
-    // ToDo - Formataçãod de casas decimais #.000
+    // ToDo - Formatação de casas decimais #.000
     return this._experience
   }
   get level() {
@@ -117,5 +116,11 @@ export class Player implements IElement {
   }
   get height() {
     return this._height
+  }
+  get rotation() {
+    return this._rotation
+  }
+  get jumpForce() {
+    return this._jumpForce
   }
 }

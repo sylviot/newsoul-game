@@ -10,24 +10,16 @@ export class Map {
   private _name: string
   private _width: number
   private _height: number
+  private _gravity: number = 18.0
 
   private _collisions: any
   private _elements: any
-  private enemies: Array<any>
-  private npcs: Array<any>
-  private textures: any
-  private teleports: Array<any>
+  // private enemies: Array<any>
+  // private npcs: Array<any>
+  // private textures: any
+  // private teleports: Array<any>
 
-  private collision: any
-  
   constructor(public game: IScene){
-    this.collision = new THREE.Mesh(
-      new THREE.PlaneGeometry(35, 35),
-      new THREE.MeshBasicMaterial({transparent: true, color: 0x3dc0d3})
-    )
-
-    this.collision.position.set(0, 0, 4)
-    this.game.scene.add(this.collision)    
   }
 
   build(_data: any): void {
@@ -40,7 +32,7 @@ export class Map {
     for(let item of _data.collisions) {
       let mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(35, 35),
-        new THREE.MeshBasicMaterial({transparent: true, color: 0x00ff})
+        new THREE.MeshBasicMaterial({transparent: true, color: 0x0f0f0f})
       )
       
       mesh.position.set(item.x, item.y, 2)
@@ -56,6 +48,28 @@ export class Map {
 
       return element;
     })
+
+    this.showName()
+  }
+
+  private showName(): void {
+    let name = document.createElement('h1')
+    name.style.color = 'white'
+    name.style.textShadow = '1px 1px 1px black'
+    name.style.width = '300px'
+    name.style.height = '30px'
+    name.style.position = 'fixed'
+    name.style.top = '5%'
+    name.style.left = '50%'
+    name.style.marginLeft = '-150px'
+
+    name.textContent = "<< "+this._name+" >>"
+
+    document.body.appendChild(name)
+    setTimeout(() =>{
+      name.style.opacity = '0.3'
+      name.remove()
+    }, 3000)
   }
 
   update(_delta): void {
@@ -86,20 +100,28 @@ export class Map {
       left = this.hasLeftCollision(_element, _acceleration, tile),
       right = this.hasRightCollision(_element, _acceleration, tile)
       
-      if( ! ((left || right) || (up || down)) )
+      if( ! ((left || right) || (up || down)) ){
         return true
+      }
     }
     
     return false
   }
   
   applyCollision(_element: IElement): void { }
-  applyGravity(_element: IElement): void { }
+  applyGravity(_acceleration: any): any { 
+    _acceleration.y -= 3.5;
+    
+    return _acceleration;
+   }
 
   get elements() {
     return this._elements
   }
   get name() {
     return this._name
+  }
+  get gravity() {
+    return this._gravity
   }
 }

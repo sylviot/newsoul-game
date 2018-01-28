@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import { Game } from './Game'
+
 import { IElement, IScene } from './Interface'
 
 export class Element implements IElement {
@@ -39,11 +39,14 @@ export class Element implements IElement {
     }
   }
 
-  updateData(_data: any) {
+  updatePosition(_x: number, _y: number): void {
+    this._x = _x
+    this._y = _y
   }
 
+  updateData(_data: any) { }
+
   update(_delta: number) {
-    // this.mesh.rotation.z = THREE.Math.lerp(this.mesh.rotation.z, Math.random() * 6 - 3, 0.01)
   }
 
   // Smell code below :X
@@ -58,7 +61,7 @@ export class Element implements IElement {
 
     this.mesh.position.set(_data.x, _data.y, _data.z);
     
-    this.mesh.rotation.z = this._rotation || 0
+    // this.mesh.rotation.z = this._rotation || 0
   }
 
   overlap(_x: number, _y: number): boolean {
@@ -79,5 +82,21 @@ export class Element implements IElement {
   }
   get texture() {
     return this._texture
+  }
+  
+  get x() {
+    return this._x
+  }
+  get y() {
+    return this._y
+  }
+  get width() {
+    return this._width
+  }
+  get height() {
+    return this._height
+  }
+  get rotation() {
+    return this._rotation
   }
 }

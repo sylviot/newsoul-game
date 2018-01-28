@@ -3,7 +3,7 @@ export interface IScene {
   scene: any
 
   _keyboadEvent(hotkey: string)
-  _mouseEvent(hotkey: string)
+  _mouseEvent(hotkey: any)
   update(): void
   render(): void
 
@@ -14,13 +14,15 @@ export interface IScene {
 }
 
 export interface IElement {
-  // _x: number
-  // _y: number
-  // _width: number
-  // _height: number
-  // _rotation: number
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
 
   loadData(data: any): void
   updateData(data: any): void
+  updatePosition(_x: number, _y: number): void
+  
   update(delta: number): void
 }

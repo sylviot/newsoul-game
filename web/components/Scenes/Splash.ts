@@ -28,9 +28,10 @@ export class SplashScene implements IScene {
   render(): void {}
 
   down(): void {
-    console.log('down')
+    console.log('down splash')
   }
   up(): void {
-    console.log('up')    
+    console.log('up splash')    
+    this._main.next()    
   }
 }
