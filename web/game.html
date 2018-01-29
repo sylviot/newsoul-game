@@ -13,7 +13,8 @@
   <script src="/game.js"></script>
   <script>
     require(['Main'], function(mod) {
-      mod.Main.run()
+      var main = new mod.Main()
+      main.run();
     });
   </script>
   <style>
