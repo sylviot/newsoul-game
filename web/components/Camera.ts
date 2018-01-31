@@ -7,4 +7,15 @@ export class Camera {
     
     return camera
   }
+
+  static OrthographicCamera(): THREE.Camera {
+    return  new THREE.OrthographicCamera(
+      window.innerWidth/-2,   /* LEFT */
+      window.innerWidth/2,    /* RIGHT */
+      window.innerHeight/2,   /* TOP */
+      window.innerHeight/-2,  /* BOTTOM */
+      0.1,                      /* NEAR */
+      1000                    /* FAR */
+    )
+  }
 }
