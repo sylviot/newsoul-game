@@ -1,5 +1,6 @@
 import * as THREE from "three"
 
+import { Chat } from '../Chat'
 import { Camera } from '../Camera'
 import { Control } from '../Control'
 import { Main, lerp } from '../Main'
@@ -7,6 +8,7 @@ import { Map } from '../Map'
 import { Player } from '../Player'
 
 import { IScene } from '../Interface'
+import { Network } from "../Network";
 
 const RESOURCES_PATH = './resources/'
 
@@ -17,9 +19,10 @@ export class GameScene implements IScene
   protected map: Map
   protected player: Player
 
-  private players: any
+  private _dummyPlayers: Array<Player>
   
-  public camera: any
+  public chat: Chat
+  public camera: THREE.Camera
   public clock: THREE.Clock
   public control: Control
   public resources: Array<any>
@@ -30,17 +33,10 @@ export class GameScene implements IScene
     this.clock = new THREE.Clock()
     this.scene = new THREE.Scene()
     this.camera = new THREE.OrthographicCamera(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 1, 100)
+    this._dummyPlayers = new Array<Player>()
 
 
     let that = this
-
-    let hotkeys = [
-      { action:'LEFT', code: 65},
-      { action:'DOWN', code: 83},
-      { action:'RIGHT', code: 68},
-      { action:'UP', code: 87},
-      { action:'SPACE', code: 32},
-    ]
 
     let info = {
       name: '[ADM] SylvioT',
@@ -128,34 +124,55 @@ export class GameScene implements IScene
     }
 
     this.resources = new Array<any>()
+    this.chat = new Chat(this);
     this.control = new Control(this)
-    this.control.loadDefaultHotkeys(hotkeys)
 
     this.player = new Player(this)
     this.player.loadData(info)
-    this.scene.add(this.player.mesh)
 
     this._main.network.send({
       action: 'load_character', 
       character_id: 'Player-' + ~~(Math.random() * 999999)
     })
 
-    this.players = [];
-    
-    this._main.network.hook('join', (_data) => {
-      this.players[_data.nickname] = new Player(this)
-      this.players[_data.nickname].loadData({
-        name: _data.nickname,
+    this._dummyPlayers = [];
+
+    let addPlayer = data => {
+      let player = this._dummyPlayers[data.nickname] = new Player(this)
+
+      player.loadData({
+        name: data.nickname,
         position: { x: 900, y: 320  }
       })
       
-      this.scene.add(this.players[_data.nickname].mesh)
-      console.log(_data, this.scene)
+      this.scene.add(player.mesh)
+      this.map.addDummyPlayer(player)
+    }
+    
+    this._main.network.hook('join', data => {
+      let player = this._dummyPlayers[data.nickname] = new Player(this)
+
+      player.loadData({
+        name: data.nickname,
+        position: { x: 900, y: 320  }
+      })
+      
+      this.scene.add(player.mesh)
+      this.map.addDummyPlayer(player)
     })
 
-    this._main.network.hook('movement', (_data) => {
-      if(this.players[_data.nickname])
-        this.players[_data.nickname].updatePosition(_data.x, _data.y)
+    this._main.network.hook('leave', _data => {
+      this.map.removeDummyPLayer(this._dummyPlayers[_data.nickname])
+
+      this._dummyPlayers[_data.nickname].remove()
+    })
+
+    this._main.network.hook('movement', data => {
+      if(!this._dummyPlayers[data.nickname]) {
+        addPlayer(data);
+      }
+
+        this._dummyPlayers[data.nickname].updatePosition(data.x, data.y)
     })
     
     data.map.materials.forEach(item => {
@@ -163,6 +180,7 @@ export class GameScene implements IScene
     });
     
     this.map = new Map(this);
+    this.map.addPlayer(this.player)
     this.map.build(data.map)
     
     this.camera.position.x = data.camera.position.x
@@ -173,51 +191,21 @@ export class GameScene implements IScene
   render(): void {
   }
 
-  velocityV: number = 0
-  velocityH: number = 0
-
   update(): void { 
     let delta = this.clock.getDelta()
 
     this.map.update(delta)
     this.player.update(delta)
 
-    for(let id in this.players) {
-      this.players[id].update(delta)
+    for(let id in this._dummyPlayers) {
+      this._dummyPlayers[id].update(delta)
     }
 
     // ToDo - Camera following IElement
     this.camera.position.x = lerp(this.camera.position.x, this.player.x, 0.07)
     this.camera.position.y = lerp(this.camera.position.y, this.player.y, 0.07)
 
-
-    // ToDo - check if element is grounded nor collision (wrong)
-    if( this.map.hasCollision(this.player, {x:0, y: this.velocityV}) ) {
-      this.velocityV = -this.map.gravity * delta
-
-      if (this.control.isPressed('SPACE')) 
-        { this.velocityV = this.player.jumpForce }
-      
-    } 
-    else {
-      this.velocityV -= this.map.gravity * delta
-    }
-
-    if (this.control.isPressed('LEFT'))
-      this.velocityH = this.player.moveLEFT().x
-
-    if (this.control.isPressed('RIGHT'))
-      this.velocityH = this.player.moveRIGHT().x
-
-    if( ! this.map.hasCollision(this.player, {x:0, y:this.velocityV}) ) {
-      this.player.move('JUMP', {x:0, y:this.velocityV} )
-    }
-
-    if( ! this.map.hasCollision(this.player, {x:this.velocityH, y:0}) ) {
-      this.player.move('MOVE', {x:this.velocityH, y:0} )
-      this.velocityH = 0
-    }
-
+    
     this._main.network.send({
       action: 'movement',
       x: this.player.x,
@@ -226,15 +214,14 @@ export class GameScene implements IScene
   }
   
   down(): void {
-    console.log('down')
+    console.log('down game')
   }
   up(): void {
-    console.log('up')    
+    console.log('up GaME')
   }
   
   /* EVENTS */
   /* ToDo - need adjust keyboard/mouse event */
-  _keyboadEvent(_hotkey: string) {  }
   _mouseEvent(_event) {  }
 
   /* RESOURCES METHODS */

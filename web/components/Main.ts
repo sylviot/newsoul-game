@@ -37,6 +37,7 @@ export class Main {
       SplashScene,
       LoginScene,
       GameScene,
+      TestScene,
     );
 
     this._sceneIndex = -1;
@@ -78,7 +79,7 @@ export class Main {
     this._renderer.render(this.sceneCurrent.scene, this.sceneCurrent.camera)
   }
 
-  get network() {
+  get network(): Network {
     return this._network
   }
   get renderer() {

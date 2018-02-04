@@ -1,8 +1,11 @@
+import { Control } from "./Control";
+import { Network } from "./Network";
+
 export interface IScene {
-  camera: any
+  camera: THREE.Camera
+  control: Control
   scene: any
 
-  _keyboadEvent(hotkey: string)
   _mouseEvent(hotkey: any)
   update(): void
   render(): void

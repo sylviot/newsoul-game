@@ -18,8 +18,6 @@ export class SplashScene implements IScene {
     this.control = new Control(this)
   }
   
-  _keyboadEvent(hotkey: string) { }
-
   _mouseEvent(hotkey: string) { this._main.next() }
 
   tryLoadTexture(_name: string) { }

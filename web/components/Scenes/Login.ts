@@ -110,8 +110,6 @@ export class LoginScene implements IScene {
     this._main.network.connect()
   }
   
-  _keyboadEvent(hotkey: string) { }
-
   _mouseEvent(hotkey) { }
 
   tryLoadTexture(_name: string) { }

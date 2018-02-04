@@ -2,6 +2,7 @@ import * as THREE from "three"
 
 import { GameScene } from './Scenes/Game'
 import { lerp } from './Main'
+import { Text } from './UI/Text'
 
 import { IElement, IScene } from './Interface'
 
@@ -24,10 +25,14 @@ export class Player implements IElement {
   private _jumpForce: number = 9.55
   private _acceleration: number = 3.5
 
+  private _velocityV: number = 0
+  private _velocityH: number = 0
 
   private _texture: any
   private _material: any
   private _mesh: any
+
+  private _nameTexture: any
   
 
   constructor(public _scene: IScene) {
@@ -54,12 +59,22 @@ export class Player implements IElement {
 
   private loadBasicMesh(): void {
     this._texture = new THREE.TextureLoader().load('resources/player.png')
+    // this._texture.minFilter = THREE.LinearFilter
     this._material = new THREE.MeshBasicMaterial({map: this._texture, color: 0x3dc0d3})
     this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/32,32), this._material)
+
+    this._nameTexture = new Text(100, 20, this._name||'Player1')
+    this.mesh.add(this._nameTexture.mesh)
+
+    // this.mesh.rotation.z = THREE.Math.degToRad(45)
+    this._scene.scene.add(this.mesh)
   }
 
   changeName(_newName: string) {
     this._name = _newName
+
+    this._nameTexture = new Text(100, 20, this._name||'Player1')
+    this.mesh.add(this._nameTexture.mesh)
   }
   changePosition(_newPosition) {
     this._x = _newPosition.x
@@ -81,7 +96,11 @@ export class Player implements IElement {
   update(_delta: number): void {
     this.mesh.position.x = this._x;//lerp(this.mesh.position.x, this._x, 0.3)
     this.mesh.position.y = this._y;//lerp(this.mesh.position.y, this._y, 0.9)
-    this.mesh.position.z = 2
+    this.mesh.position.z = 9
+  }
+
+  remove(): void {
+    this._scene.scene.remove(this.mesh)
   }
 
   /* GET/SET */
@@ -122,5 +141,25 @@ export class Player implements IElement {
   }
   get jumpForce() {
     return this._jumpForce
+  }
+
+  get velocityV(): number {
+    return this._velocityV
+  }
+  set velocityV(_value: number) {
+    this._velocityV = _value
+  }
+  get velocityH(): number {
+    return this._velocityH
+  }
+  set velocityH(_value: number) {
+    this._velocityH = _value
+  }
+
+  get vectorX(): object {
+    return {x: this._velocityH, y: 0}
+  }
+  get vectorY(): object {
+    return {x: 0, y: this.velocityV}
   }
 }

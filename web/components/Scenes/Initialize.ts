@@ -77,12 +77,9 @@ export class InitializeScene implements IScene {
     queue_next()
   }
   
-  _keyboadEvent(hotkey: string) { }
-
   _mouseEvent(hotkey: string) { }
 
-  tryLoadTexture(_name: string) {
-  }
+  tryLoadTexture(_name: string) { }
   
   update(): void {
     this._loading.update()
