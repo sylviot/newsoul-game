@@ -1,1081 +1,1200 @@
-function BugReport(renderer, callback) {
-  var bug_input = document.createElement('textarea');
-  bug_input.id = 'bug_input';
-  bug_input.style.width = 200;
-  bug_input.style.height = 100;
-  bug_input.style.position = 'fixed';
-  bug_input.style.top = 0;
-  bug_input.style.right = '40px';
-  bug_input.rows = 3;
-  bug_input.style.display = 'none';
-
-  var bug_button = document.createElement('div');
-  bug_button.id = 'bug_button';
-  bug_button.innerHTML = "BUG";
-  bug_button.style.textAlign = 'center';
-  bug_button.style.fontSize = '17px';
-  bug_button.style.fontWeight = 'bold';
-  bug_button.style.lineHeight = '30px';
-  bug_button.style.color = 'white';
-  bug_button.style.backgroundColor = '#3F51B5';
-  bug_button.style.borderRadius = '7px';
-  bug_button.style.cursor = 'pointer';
-  bug_button.style.width = '40px';
-  bug_button.style.height = '30px';
-  bug_button.style.position = 'fixed';
-  bug_button.style.top = 0;
-  bug_button.style.right = 0;
-
-  var bug_send = document.createElement('div');
-  bug_send.id = 'bug_send';
-  bug_send.innerHTML = "SEND";
-  bug_send.style.textAlign = 'center';
-  bug_send.style.fontSize = '14px';
-  bug_send.style.fontWeight = 'bold';
-  bug_send.style.lineHeight = '30px';
-  bug_send.style.color = 'white';
-  bug_send.style.backgroundColor = '#4CAF50';
-  bug_send.style.borderRadius = '7px';
-  bug_send.style.cursor = 'pointer';
-  bug_send.style.width = '40px';
-  bug_send.style.height = '30px';
-  bug_send.style.position = 'fixed';
-  bug_send.style.top = '31px';
-  bug_send.style.right = 0;
-  bug_send.style.display = 'none';
-
-  document.body.appendChild(bug_button);
-  document.body.appendChild(bug_send);
-  document.body.appendChild(bug_input);
-
-  bug_button.addEventListener('click', function(){
-    var d = bug_input.style.display;
-    d = (d=='none'?'inherit':'none');
-
-    bug_input.style.display = d;
-    bug_send.style.display = d;
-  });
-
-  bug_send.addEventListener('click', function(){
-    var data = renderer.domElement.toDataURL();
-    var bug = bug_input.value;
-
-    callback(data, bug);
-    bug_input.value = '';
-  });
-}
-
-function Camera() {
-  var FOV = 60,//2 * Math.atan(window.innerHeight/ (2*700)) * 180 / Math.PI,
-      WIDTH = window.innerWidth,
-      HEIGHT = window.innerHeight,
-      RATIO = WIDTH / HEIGHT,
-      NEAR = 0.1,
-      FAR = 720;
-
-
-  var instance = new THREE.OrthographicCamera(WIDTH/-2, WIDTH/2, HEIGHT/2, HEIGHT/-2, 1, 1000);
-  //var instance = new THREE.PerspectiveCamera(FOV, RATIO, NEAR, FAR);
-  var _object = null,
-      _boundHeight = null,
-      _boundWidth = null,
-      _cameraHeight = window.innerHeight,
-      _cameraWidth = window.innerWidth;
-
-  instance.setPosition = function(x, y, z) {
-    instance.position.set(x, y, z);
-  }
-
-  instance.follow = function(object, boundX, boundY, boundWidth, boundHeight) {
-    _object = object;
-    _boundX = boundX;
-    _boundY = boundY;
-    _boundWidth = boundWidth;
-    _boundHeight = boundHeight;
-  }
-
-  Math.toRadius = function(angle) {
-    return angle * Math.PI / 180;
-  }
-
-  var new_position = null;
-  instance.update = function() {
-    new_position = {x: _object.position.x, y: _object.position.y,z: instance.position.z};
-
-    var distance_x = _boundX + WIDTH/2,
-        distance_bound_x = _boundWidth - WIDTH/2;
-    if(new_position.x < distance_x) {
-      new_position.x = distance_x;
-    } else if(new_position.x > distance_bound_x){
-      new_position.x = distance_bound_x;
+define("Network", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Network {
+        constructor(_endpoint = '/ws') {
+            this._endpoint = _endpoint;
+            this._protocol = window.location.protocol;
+            this._host = window.location.host;
+            this._hooks = new Array();
+        }
+        connect() {
+            if (!this._socket || (this._socket instanceof WebSocket && this._socket.readyState == WebSocket.CLOSED)) {
+                this._socket = new WebSocket(this.url);
+                this._socket.onopen = (_response) => { this._onOpenEvent(_response); };
+                this._socket.onclose = (_response) => { this._onCloseEvent(_response); };
+                this._socket.onerror = (_response) => { this._onErrorEvent(_response); };
+                this._socket.onmessage = (_response) => { this._onMessageEvent(_response); };
+            }
+        }
+        hook(_name, _callback) {
+            this._hooks[_name] = _callback;
+        }
+        call_hook(_name, _data) {
+            let func = this._hooks[_name];
+            !!func && func(_data);
+        }
+        send(_data) {
+            if (this.isClosed()) {
+                return null;
+            }
+            return this._socket.send(JSON.stringify(_data));
+        }
+        state() {
+            if (this.isClosed()) {
+                return null;
+            }
+            return this._socket.readyState;
+        }
+        /* WEBSOCKET EVENTS */
+        _onOpenEvent(_response) {
+            this.call_hook('server-connect', true);
+        }
+        _onCloseEvent(_response) {
+            this.call_hook('server-disconnect', true);
+        }
+        _onErrorEvent(_response) {
+            /* ToDo - Re-connect not implemented */
+        }
+        _onMessageEvent(_response) {
+            var _data = JSON.parse(_response.data);
+            this.call_hook(_data.action, _data);
+        }
+        /* GET SET AND GLOBAL */
+        isClosed() {
+            return (!this._socket || (this._socket instanceof WebSocket && this._socket.readyState == WebSocket.CLOSED));
+        }
+        get url() {
+            return this._protocol.replace('http', 'ws') +
+                '//' +
+                this._host +
+                this._endpoint;
+        }
     }
-
-    var distance_y = _boundY + HEIGHT/2;
-    if(new_position.y < distance_y){
-      new_position.y = distance_y;
-    } 
-
-    var delta = 0.1;
-    instance.position.set(THREE.Math.lerp(instance.position.x, new_position.x, delta), THREE.Math.lerp(instance.position.y, new_position.y, delta), new_position.z);
-  }
-
-  return instance;
-}
-
-function Chat() {
-  var that = this;
-
-  var CONFIGURATION = {
-    fontSize: '13px',
-    fontFamily: 'cursive'
-  }
-
-  var messages = [];
-
-  var chat = document.createElement('div');
-  chat.id = 'chat';
-  chat.style.position = 'fixed';
-  chat.style.bottom = '0px';
-  chat.style.left = '0px';
-  chat.style.width = (window.innerWidth * 0.3) + 'px';
-  chat.style.height = (window.innerHeight * 0.4) + 'px';
-
-  var chat_message = document.createElement('div');
-  chat_message.id = "chat_message";
-  chat_message.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
-  chat_message.style.width = '100%';
-  chat_message.style.height = '100%';
-  chat_message.style.paddingRight = '20px';
-  chat_message.style.marginTop = '-24px';
-  chat_message.style.overflowY = 'auto';
-  chat_message.style.fontSize = CONFIGURATION.fontSize;
-  chat_message.style.fontFamily = CONFIGURATION.fontFamily;
-
-  var chat_input = document.createElement('input');
-  chat_input.type = 'text';
-  chat_input.style.position = 'absolute';
-  chat_input.style.bottom = '0px';
-  chat_input.style.width = '100%';
-  chat_input.style.fontSize = CONFIGURATION.fontSize;
-  chat_input.style.fontFamily = CONFIGURATION.fontFamily;
-
-  chat.appendChild(chat_message);
-  chat.appendChild(chat_input);
-
-  document.body.appendChild(chat);
-
-  this.changeConfiguration = function(key, value) {
-    CONFIGURATION[key] = value;
-  }
-
-  this.receiveMessage = function(data) {
-    chat_message.innerHTML += '<span style="display:block"><strong>' + data.nickname + '</strong>: ' + data.message + '</span>';
-    chat_message.scrollTop = chat_message.scrollHeight;
-  }
-
-  chat_input.addEventListener('keydown', function(event, a){
-    if(event.keyCode == 13 && chat_input.value) {
-      that.receiveMessage({nickname: 'EU', message: chat_input.value});
-      that.emitter_send_message(chat_input.value);
-      chat_input.value = '';
+    exports.Network = Network;
+});
+define("Control", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Control {
+        constructor(_scene) {
+            this._hotkeys = new Array();
+            this._keys = new Array();
+            document.body.onkeydown = (_event) => {
+                this._keys[_event.keyCode] = true;
+            };
+            document.body.onkeyup = (_event) => {
+                this._keys[_event.keyCode] = false;
+            };
+            document.body.onmousemove = (_event) => { _scene._mouseEvent({ name: 'MOVE', x: _event.clientX, y: _event.clientY }); };
+            document.body.oncontextmenu = (_event) => { _event.preventDefault(); _scene._mouseEvent('RIGHT CLICK'); };
+            document.body.onclick = (_event) => { _event.preventDefault(); _scene._mouseEvent('LEFT CLICK'); };
+            this.defaultHotkeys();
+        }
+        customHotkeys(_hotkeys) {
+            _hotkeys.forEach(hk => {
+                this._hotkeys[hk.action] = hk.code;
+            });
+        }
+        defaultHotkeys() {
+            var hotkeys = [
+                { action: 'LEFT', code: 65 },
+                { action: 'DOWN', code: 83 },
+                { action: 'RIGHT', code: 68 },
+                { action: 'UP', code: 87 },
+                { action: 'SPACE', code: 32 }
+            ];
+            this.customHotkeys(hotkeys);
+        }
+        isPressed(_hotkey) {
+            let _hotkeyCode = this._hotkeys[_hotkey];
+            return (_hotkeyCode && this._keys[_hotkeyCode]);
+        }
     }
-  });
-}
-
-function Control(keyboardBind, mouseBind) {
-  var HOTKEYS = [];
-  HOTKEYS[65] = 'LEFT';
-  HOTKEYS[83] = 'DOWN';
-  HOTKEYS[68] = 'RIGHT';
-  HOTKEYS[87] = 'UP';
-
-  document.body.onkeydown = function(e) {
-    var keyCode = e.keyCode;
-    
-    if(HOTKEYS[keyCode]) keyboardBind(HOTKEYS[keyCode]);
-  }
-
-  document.body.oncontextmenu = function(e) { e.preventDefault(); mouseBind('RIGHT'); }
-  document.body.onclick = function(e){ e.preventDefault(); mouseBind('LEFT'); }
-}
-
-
-function Map(id) {
-  var that = this;
-  var map_id = id;
-
-  this.materials = [];
-  this.camera = new Camera();
-  this.scene = new THREE.Scene();
-  this.chat = new Chat();
-  
-  this.clearColor = 0x7B9EFF;
-  this.gravity = {x: 0, y: -1};
-  this.player = null;
-  this.players = [];
-  this.enemies = [];
-  this.backgrounds = [];
-  this.npcs = [];
-
-  this.load = function() {
-    that.camera.setPosition(0, 0, 700);
-
-    var data = {
-      'name': "Mapa 01",
-      'width': 700,
-      'height': 200,
-      'collisions': [],
-      'materials': [{
-        'id': 'tile_0',
-        'sprite': 'tile_0.png',
-        'effects': null
-      }],
-      'tiles': [
-        { 'x': 0, 'y': 0, 'material': 'tile_0' },
-        { 'x': 0, 'y': 35, 'material': 'tile_0' },
-        { 'x': 0, 'y': 70, 'material': 'tile_0' },
-        { 'x': 0, 'y': 105, 'material': 'tile_0' },
-        { 'x': 0, 'y': 140, 'material': 'tile_0' },
-        { 'x': 0, 'y': 175, 'material': 'tile_0' },
-        { 'x': 0, 'y': 210, 'material': 'tile_0' },
-        { 'x': 0, 'y': 245, 'material': 'tile_0' },
-        { 'x': 0, 'y': 280, 'material': 'tile_0' },
-        { 'x': 0, 'y': 315, 'material': 'tile_0' },
-        { 'x': 0, 'y': 350, 'material': 'tile_0' },
-        { 'x': 0, 'y': 385, 'material': 'tile_0' },
-        { 'x': 0, 'y': 420, 'material': 'tile_0' },
-        { 'x': 0, 'y': 455, 'material': 'tile_0' },
-        { 'x': 0, 'y': 490, 'material': 'tile_0' },
-        { 'x': 0, 'y': 525, 'material': 'tile_0' },
-
-        { 'x': 140, 'y': 105, 'material': 'tile_0' },
-        { 'x': 140, 'y': 105, 'material': 'tile_0' },
-        { 'x': 175, 'y': 105, 'material': 'tile_0' },
-
-        { 'x': 35, 'y': 0, 'material': 'tile_0' },
-        { 'x': 70, 'y': 0, 'material': 'tile_0' },
-        { 'x': 105, 'y': 0, 'material': 'tile_0' },
-        { 'x': 140, 'y': 0, 'material': 'tile_0' },
-        { 'x': 175, 'y': 0, 'material': 'tile_0' },
-        { 'x': 210, 'y': 0, 'material': 'tile_0' },
-        { 'x': 245, 'y': 0, 'material': 'tile_0' },
-        { 'x': 280, 'y': 0, 'material': 'tile_0' },
-        { 'x': 315, 'y': 0, 'material': 'tile_0' },
-        { 'x': 350, 'y': 0, 'material': 'tile_0' },
-        { 'x': 385, 'y': 0, 'material': 'tile_0' },
-        { 'x': 420, 'y': 0, 'material': 'tile_0' },
-        { 'x': 455, 'y': 0, 'material': 'tile_0' },
-        { 'x': 490, 'y': 0, 'material': 'tile_0' },
-        { 'x': 525, 'y': 0, 'material': 'tile_0' },
-        { 'x': 560, 'y': 0, 'material': 'tile_0' },
-        { 'x': 595, 'y': 0, 'material': 'tile_0' },
-        { 'x': 630, 'y': 0, 'material': 'tile_0' },
-        { 'x': 665, 'y': 0, 'material': 'tile_0' },
-        { 'x': 700, 'y': 0, 'material': 'tile_0' },
-        { 'x': 735, 'y': 0, 'material': 'tile_0' },
-        { 'x': 770, 'y': 0, 'material': 'tile_0' },
-        { 'x': 805, 'y': 0, 'material': 'tile_0' },
-        { 'x': 840, 'y': 0, 'material': 'tile_0' },
-        { 'x': 875, 'y': 0, 'material': 'tile_0' },
-        { 'x': 910, 'y': 0, 'material': 'tile_0' },
-        { 'x': 945, 'y': 0, 'material': 'tile_0' },
-        { 'x': 980, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1015, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1050, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1085, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1120, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1155, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1190, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1225, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1260, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1295, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1330, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1365, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1400, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1435, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1470, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 0, 'material': 'tile_0' },
-        { 'x': 35, 'y': 525, 'material': 'tile_0' },
-        { 'x': 70, 'y': 525, 'material': 'tile_0' },
-        { 'x': 105, 'y': 525, 'material': 'tile_0' },
-        { 'x': 140, 'y': 525, 'material': 'tile_0' },
-        { 'x': 175, 'y': 525, 'material': 'tile_0' },
-        { 'x': 210, 'y': 525, 'material': 'tile_0' },
-        { 'x': 245, 'y': 525, 'material': 'tile_0' },
-        { 'x': 280, 'y': 525, 'material': 'tile_0' },
-        { 'x': 315, 'y': 525, 'material': 'tile_0' },
-        { 'x': 350, 'y': 525, 'material': 'tile_0' },
-        { 'x': 385, 'y': 525, 'material': 'tile_0' },
-        { 'x': 420, 'y': 525, 'material': 'tile_0' },
-        { 'x': 455, 'y': 525, 'material': 'tile_0' },
-        { 'x': 490, 'y': 525, 'material': 'tile_0' },
-        { 'x': 525, 'y': 525, 'material': 'tile_0' },
-        { 'x': 560, 'y': 525, 'material': 'tile_0' },
-        { 'x': 595, 'y': 525, 'material': 'tile_0' },
-        { 'x': 630, 'y': 525, 'material': 'tile_0' },
-        { 'x': 665, 'y': 525, 'material': 'tile_0' },
-        { 'x': 700, 'y': 525, 'material': 'tile_0' },
-        { 'x': 735, 'y': 525, 'material': 'tile_0' },
-        { 'x': 770, 'y': 525, 'material': 'tile_0' },
-        { 'x': 805, 'y': 525, 'material': 'tile_0' },
-        { 'x': 840, 'y': 525, 'material': 'tile_0' },
-        { 'x': 875, 'y': 525, 'material': 'tile_0' },
-        { 'x': 910, 'y': 525, 'material': 'tile_0' },
-        { 'x': 945, 'y': 525, 'material': 'tile_0' },
-        { 'x': 980, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1015, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1050, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1085, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1120, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1155, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1190, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1225, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1260, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1295, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1330, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1365, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1400, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1435, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1470, 'y': 525, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 525, 'material': 'tile_0' },
-
-        { 'x': 1505, 'y': 0, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 35, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 70, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 105, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 140, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 175, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 210, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 245, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 280, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 315, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 350, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 385, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 420, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 455, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 490, 'material': 'tile_0' },
-        { 'x': 1505, 'y': 525, 'material': 'tile_0' },
-
-      ],
-      'backgrounds': [
-        {'id': "bg_0", 'sprite': "bg_0.png", 'x': 700, 'y': 200, 'z': -3},
-        {'id': "bg_1", 'sprite': "bg_1.png", 'x': 700, 'y': 200, 'z': -2},
-
-        {'id': "bg_hill_0", 'sprite': "hill.png", 'width': 1200, 'height': 610, 'x': -150, 'y': -200, 'z': -4},
-        {'id': "bg_hill_1", 'sprite': "hill.png", 'width': 1200, 'height': 610, 'x': 900, 'y': -200, 'z': -4},
-
-        {'id': "bg_pilar_0", 'sprite': "pillar.png", 'width': 183, 'height': 300, 'x': 663, 'y': 18, 'z': -2},
-
-        {'id': "bg_crystal_0", 'sprite': "crystal.png", 'width': 97, 'height': 80, 'x': 700, 'y': 320, 'z': -2},
-
-        {'id': "bg_cloud_0", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 200, 'y': 410, 'z': -3},
-        {'id': "bg_cloud_1", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 500, 'y': 510, 'z': -3},
-        {'id': "bg_cloud_2", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 800, 'y': 390, 'z': -3},
-        {'id': "bg_cloud_3", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 1100, 'y': 340, 'z': -3},
-        {'id': "bg_cloud_4", 'sprite': "cloud.png", 'width': 97, 'height': 80, 'x': 1300, 'y': 470, 'z': -3},
-      ],
-      'npcs': [],
+    exports.Control = Control;
+});
+define("Interface", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+define("Chat", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Chat {
+        constructor(game) {
+            this.messages = [];
+            this.scene = game;
+            let chat = document.createElement('form');
+            let chat_messages = document.createElement('div');
+            let chat_input = document.createElement('input');
+            // var chat = document.createElement('div');
+            chat.id = 'chat';
+            chat.style.position = 'fixed';
+            chat.style.bottom = '0px';
+            chat.style.left = '0px';
+            chat.style.width = (window.innerWidth * 0.3) + 'px';
+            chat.style.height = (window.innerHeight * 0.4) + 'px';
+            // var chat_message = document.createElement('div');
+            chat_messages.id = "chat_message";
+            chat_messages.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+            chat_messages.style.width = '100%';
+            chat_messages.style.height = '100%';
+            chat_messages.style.paddingRight = '20px';
+            chat_messages.style.marginTop = '-24px';
+            chat_messages.style.overflowY = 'auto';
+            chat_messages.style.fontSize = '13px';
+            chat_messages.style.fontFamily = 'cursive';
+            // var chat_input = document.createElement('input');
+            chat_input.type = 'text';
+            chat_input.style.position = 'absolute';
+            chat_input.style.bottom = '0px';
+            chat_input.style.width = '100%';
+            chat_input.style.fontSize = '13px';
+            chat_input.style.fontFamily = 'cursive';
+            chat.appendChild(chat_messages);
+            chat.appendChild(chat_input);
+            document.body.appendChild(chat);
+            let receive_message = data => {
+                chat_messages.innerHTML += '<span style="display:block"><strong>' + data.nickname + '</strong>: ' + data.message + '</span>';
+                chat_messages.scrollTop = chat_messages.scrollHeight;
+            };
+            this.scene._main.network.hook('chat', receive_message);
+            chat.addEventListener('submit', event => {
+                console.log('submit');
+                receive_message({ nickname: 'EU', message: chat_input.value });
+                this.scene._main.network.send({ action: 'chat', message: chat_input.value });
+                chat_input.value = '';
+                event.preventDefault();
+            });
+        }
     }
-
-    that.tiles = data.tiles;
-
-    that.build(data.materials, data.tiles, data.collisions, data.backgrounds);
-  }
-
-  this.update = function() {
-    that.camera.update();
-    that.player.update();
-
-    for(var i in that.players) {
-      that.players[i].update();
+    exports.Chat = Chat;
+});
+define("Camera", ["require", "exports", "three"], function (require, exports, THREE) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Camera {
+        static basic() {
+            let camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
+            return camera;
+        }
+        static OrthographicCamera() {
+            return new THREE.OrthographicCamera(window.innerWidth / -2, /* LEFT */ window.innerWidth / 2, /* RIGHT */ window.innerHeight / 2, /* TOP */ window.innerHeight / -2, /* BOTTOM */ 0.1, /* NEAR */ 1000 /* FAR */);
+        }
     }
-  }
-
-  /* ADICIONAR ELEMENTOS */
-
-  this.addPlayer = function(player) {
-    that.player = player;
-    that.camera.follow(that.player, -17.5, -17.5, 1522.5, 532.5);
-
-    that.scene.add(player);
-  }
-  this.addOtherPlayer = function(player) {
-    that.players[player.nickname] = new Player();
-    that.players[player.nickname].setName(player.nickname);
-    that.players[player.nickname].position.set(player.x, player.y, 0);
-
-    that.scene.add(that.players[player.nickname]);
-  }
-  this.updateOtherPlayer = function(player) {
-    if(!that.players[player.nickname]) that.addOtherPlayer(player);// Provisorio até vim a lista de personagens no JOIN
-
-    that.players[player.nickname].moveTo(player.x, player.y);
-  }
-  this.deleteOtherPlayer = function(player) {
-    that.scene.remove(that.players[player.nickname]);
-    delete that.players[player.nickname];
-  }
-  this.addEnemy = function(enemy) {}
-  this.addNPC = function(NPC) {}
-  this.addBackground = function(background) {
-    var texture = new THREE.ImageUtils.loadTexture('resources/backgrounds/' + background.sprite),
-        material = new THREE.MeshBasicMaterial({map: texture, transparent: true}),
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(background.width, background.height), material);
-
-    texture.minFilter = THREE.LinearFilter;
-
-    mesh.position.set(background.x + background.width/2, background.y + background.height/2, background.z);
-
-    that.scene.add(mesh); 
-  }
-  this.addTeleport = function() {}
-  this.addTile = function(tile) {
-      var texture = that.materials[tile.material],
-          material  = new THREE.MeshBasicMaterial({map: texture}),
-          mesh = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), material);
-
-      mesh.position.set(tile.x, tile.y, -1);
-
-      that.scene.add(mesh);
-  }
-
-  this.build = function(materials, tiles, collisions, backgrounds) {
-    for(var material of materials) {
-      let texture = new THREE.ImageUtils.loadTexture('resources/tiles/' + material.sprite);
-      texture.minFilter = THREE.LinearFilter;
-      that.materials[material.id] = texture;
+    exports.Camera = Camera;
+});
+define("Element", ["require", "exports", "three"], function (require, exports, THREE) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Element {
+        constructor(_scene) {
+            this._scene = _scene;
+        }
+        loadData(_data) {
+            if (_data.type == 'tile') {
+                this._width = 35;
+                this._height = 35;
+                this.make(_data);
+            }
+            else if (_data.type == 'background') {
+                this._width = 1200;
+                this._height = 600;
+                this._rotation = 0.05;
+                this.make(_data);
+            }
+            else if (_data.type == 'fixed') {
+                this._width = 177;
+                this._height = 300;
+                // this._rotation = 0.2
+                this.make(_data);
+            }
+        }
+        updatePosition(_x, _y) {
+            this._x = _x;
+            this._y = _y;
+        }
+        updateData(_data) { }
+        update(_delta) {
+        }
+        // Smell code below :X
+        make(_data) {
+            this._texture = this._scene.tryLoadTexture(_data.material);
+            this._material = new THREE.MeshBasicMaterial({ map: this._texture, transparent: true });
+            this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(this._width, this._height), this._material);
+            this._x = _data.x;
+            this._y = _data.y;
+            this.mesh.position.set(_data.x, _data.y, _data.z);
+            // this.mesh.rotation.z = this._rotation || 0
+        }
+        overlap(_x, _y) {
+            if ((_x < this._x - 17.5 || _x > this._x + 17.5) ||
+                (_y < this._y - 17.5 || _y > this._y + 17.5))
+                this._mesh.material = new THREE.MeshBasicMaterial({ map: this._texture, transparent: true, color: 'white' });
+            else
+                this._mesh.material = new THREE.MeshBasicMaterial({ map: this._texture, transparent: true, color: 'red' });
+            return false;
+        }
+        get material() {
+            return this._material;
+        }
+        get mesh() {
+            return this._mesh;
+        }
+        get texture() {
+            return this._texture;
+        }
+        get x() {
+            return this._x;
+        }
+        get y() {
+            return this._y;
+        }
+        get width() {
+            return this._width;
+        }
+        get height() {
+            return this._height;
+        }
+        get rotation() {
+            return this._rotation;
+        }
     }
-    
-    for(var tile of tiles) {
-      that.addTile(tile);
+    exports.Element = Element;
+});
+define("UI/Text", ["require", "exports", "three"], function (require, exports, THREE) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Text {
+        constructor(_width, _height, _text) {
+            this._width = _width;
+            this._height = _height;
+            this._text = _text;
+            this._canvas = document.createElement('canvas');
+            this._canvas.width = this._width;
+            this._canvas.height = this._height;
+            this._context = this._canvas.getContext('2d');
+            this._context.font = 16 + 'px Arial';
+            this._context.textAlign = 'center';
+            this._context.fillStyle = '#000000';
+            this._context.textBaseline = 'middle';
+            this._context.textAlign = 'center';
+            this._context.fillText(_text, this._width / 2, this._height / 2);
+            this._context.strokeStyle = '#fff';
+            this._context.strokeRect(0, 0, this._canvas.width, this._canvas.height);
+            this._texture = new THREE.Texture(this._canvas);
+            this._texture.needsUpdate = true;
+            this._texture.minFilter = THREE.NearestFilter;
+            // this._texture.anisotropy = 16
+            let material = new THREE.MeshBasicMaterial({ map: this._texture, transparent: true });
+            let geometry = new THREE.BoxGeometry(this._width, this._height, 1);
+            this._mesh = new THREE.Mesh(geometry, material);
+            this._mesh.position.x = 0;
+            this._mesh.position.y = 30;
+            this._mesh.position.z = 0;
+            // this._mesh.rotation.z = THREE.Math.degToRad(45)
+            // this._texture = new THREE.Texture(this._canvas)
+            // this._texture.needsUpdate = true
+            // this._sprite = new THREE.Sprite( new THREE.SpriteMaterial({
+            //     map: this._texture,
+            //     transparent: true,
+            //   })
+            // )
+            // this._sprite.scale.set(this._size, this._size, 1)
+            // this._sprite.position.x = 0
+            // this._sprite.position.y = 0
+            // this._sprite.position.z = 1
+        }
+        set name(_value) {
+            this._text = _value;
+            // console.log(_value)
+            // this._context.canvas.cl
+            // this._context.fillText(this._text, this._width/2,this._height/2)
+            // this._texture = new THREE.Texture(this._canvas)
+            // this._texture.needsUpdate = true
+            // let material = new THREE.MeshBasicMaterial({map: this._texture, transparent: true})
+            // let geometry = new THREE.BoxGeometry(this._width, this._height, 1);
+            // this._mesh = new THREE.Mesh(geometry, material)
+        }
+        get sprite() {
+            return this._sprite;
+        }
+        get mesh() {
+            return this._mesh;
+        }
     }
-
-    for(var background of backgrounds) {
-      that.addBackground(background);
+    exports.Text = Text;
+});
+define("Player", ["require", "exports", "three", "UI/Text"], function (require, exports, THREE, Text_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Player {
+        constructor(_scene) {
+            this._scene = _scene;
+            this._jumpForce = 9.55;
+            this._acceleration = 3.5;
+            this._velocityV = 0;
+            this._velocityH = 0;
+            this._width = 35;
+            this._height = 35;
+            this.loadBasicMesh();
+        }
+        loadData(_data) {
+            this.changeName(_data.name);
+            // this.changeLevel(_data.level)
+            // this.changeExperience(_data.experience)
+            this.updatePosition(_data.position.x, _data.position.y);
+            // this.changeAttributes(_data.attributes);
+        }
+        updateData(_data) { }
+        updatePosition(_x, _y) {
+            this._x = _x;
+            this._y = _y;
+        }
+        loadBasicMesh() {
+            this._texture = new THREE.TextureLoader().load('resources/player.png');
+            // this._texture.minFilter = THREE.LinearFilter
+            this._material = new THREE.MeshBasicMaterial({ map: this._texture, color: 0x3dc0d3 });
+            this._mesh = new THREE.Mesh(new THREE.PlaneGeometry(/*_data.width, _data.height*/ 32, 32), this._material);
+            this._nameTexture = new Text_1.Text(100, 20, this._name || 'Player1');
+            this.mesh.add(this._nameTexture.mesh);
+            // this.mesh.rotation.z = THREE.Math.degToRad(45)
+            this._scene.scene.add(this.mesh);
+        }
+        changeName(_newName) {
+            this._name = _newName;
+            this._nameTexture = new Text_1.Text(100, 20, this._name || 'Player1');
+            this.mesh.add(this._nameTexture.mesh);
+        }
+        changePosition(_newPosition) {
+            this._x = _newPosition.x;
+            this._y = _newPosition.y;
+        }
+        move(_direction, _acceleration) {
+            this._x += _acceleration.x;
+            this._y += _acceleration.y;
+        }
+        moveLEFT() {
+            return { x: -this._acceleration, y: 0 };
+        }
+        moveRIGHT() {
+            return { x: this._acceleration, y: 0 };
+        }
+        update(_delta) {
+            this.mesh.position.x = this._x; //lerp(this.mesh.position.x, this._x, 0.3)
+            this.mesh.position.y = this._y; //lerp(this.mesh.position.y, this._y, 0.9)
+            this.mesh.position.z = 9;
+        }
+        remove() {
+            this._scene.scene.remove(this.mesh);
+        }
+        /* GET/SET */
+        get experience() {
+            // ToDo - Formatação de casas decimais #.000
+            return this._experience;
+        }
+        get level() {
+            return this._level;
+        }
+        get name() {
+            return this._name;
+        }
+        get material() {
+            return this._material;
+        }
+        get mesh() {
+            return this._mesh;
+        }
+        get texture() {
+            return this._texture;
+        }
+        get x() {
+            return this._x;
+        }
+        get y() {
+            return this._y;
+        }
+        get width() {
+            return this._width;
+        }
+        get height() {
+            return this._height;
+        }
+        get rotation() {
+            return this._rotation;
+        }
+        get jumpForce() {
+            return this._jumpForce;
+        }
+        get velocityV() {
+            return this._velocityV;
+        }
+        set velocityV(_value) {
+            this._velocityV = _value;
+        }
+        get velocityH() {
+            return this._velocityH;
+        }
+        set velocityH(_value) {
+            this._velocityH = _value;
+        }
+        get vectorX() {
+            return { x: this._velocityH, y: 0 };
+        }
+        get vectorY() {
+            return { x: 0, y: this.velocityV };
+        }
     }
-  }
-
-  this.getCamera = function() { return that.camera; }
-  this.getScene = function() { return that.scene; }
-
-  this.hasCollision = function(x, y, h, w) {
-    var SIZE = 35, WIDTH = 10;
-    var collisions = [];
-
-    for(var tile of that.tiles){
-      var L = tile.x, R = tile.x+SIZE, U = tile.y, D = tile.y-SIZE;
-
-      var detect = ((x<L && x+w < L) || (x > R)) || ((y-h > U) || (y < D));
-      if( !detect ) return true;
+    exports.Player = Player;
+});
+define("Parallax", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class ParallaxElement {
+        constructor(mesh) {
+            this.mesh = mesh;
+            this.startX = this.mesh.position.x;
+            this.startY = this.mesh.position.y;
+            this.startZ = this.mesh.position.z;
+        }
+        getDistance() {
+            return (this.startZ * 0.5) - 1;
+        }
+        getMesh() {
+            return this.mesh;
+        }
+        getStartX() {
+            return this.startX;
+        }
     }
-
-    return false;
-  }
-}
-
-function Player(name) {
-  var that = this;
-  var texture = new THREE.ImageUtils.loadTexture('resources/player.png'),
-      material = new THREE.MeshBasicMaterial({color: 0xfff, map: texture}),
-      geometry = new THREE.PlaneGeometry(35, 35),
-      mesh = new THREE.Mesh(geometry, material);
-
- 
-  var new_position = {x:300, y:45, z:0};
-  mesh.velocity = 5;
-  mesh.height = 35;
-  mesh.width = 35;
-
-  mesh.position.set(new_position.x, new_position.y, new_position.z);
-
-  mesh.applyGravity = function(gravity) {
-    mesh.position.x += gravity.x;
-    mesh.position.y += gravity.y;
-  }
-
-  mesh.moveX = function(side){
-    if(side == -1) new_position.x-=mesh.velocity;
-    if(side == 1) new_position.x+=mesh.velocity;
-  }
-  mesh.moveY = function(side){
-    if(side == -1) new_position.y-=mesh.velocity;
-    if(side == 1) new_position.y+=mesh.velocity;
-  }
-  mesh.moveTo = function(x, y){
-    delta = 0.2
-    new_position.x = x;
-    new_position.y = y;
-  }
-
-  mesh.setName = function(name) { 
-    that.name = name;
-    that.textName = new Text(name);
-    mesh.add(that.textName);
-  }
-
-  mesh.getName = function() { return that.name; }
-  mesh.getPosition = function() { return new_position; }
-
-  mesh.keyboardBind = function(key) {
-    if(key == 'LEFT') mesh.moveX(-1);
-    if(key == 'RIGHT') mesh.moveX(1);
-  }
-
-  mesh.mouseBind = function(mouse) {
-
-  }
-
-  mesh.update = function() {
-    var delta = 0.2;
-
-    mesh.position.set(
-      THREE.Math.lerp(mesh.position.x, new_position.x, delta),
-      THREE.Math.lerp(mesh.position.y, new_position.y, delta),
-      THREE.Math.lerp(mesh.position.z, new_position.z, delta)
-    );
-  }
-
-  return mesh;
-}
-
-function Text(text) {
-  var fontface = "Arial";
-  var fontsize = 38;
-
-  var canvas = document.createElement('canvas');
-  var context = canvas.getContext('2d');
-  context.font = "Bold " + fontsize + "px " + fontface;
-
-  var metrics = context.measureText( text );
-  var width = metrics.width;
-
-  context.fillStyle = "rgba(0, 0, 0, 1.0)";
-  context.fillText(text, (canvas.width - width)/2, fontsize);
-
-  var texture = new THREE.Texture(canvas);
-  texture.needsUpdate = true;
-
-  var spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-  var sprite = new THREE.Sprite( spriteMaterial );
-  sprite.scale.set(100, 50, 1.0);
-  //sprite.position.x += width/2;
-  sprite.position.y += 10;
-
-  return sprite;
-}
-
-function Game(sceneManager, game) {
-  var that = this; 
-
-  this.bugReport = new BugReport(game.renderer, game.network.sendBug);
-
-  this.map = new Map('map_id');
-  this.camera = this.map.getCamera();
-  this.scene = this.map.getScene();
-
-  this.player = new Player();
-  this.player.setName(nickname);
-
-  game.renderer.setClearColor(this.map.clearColor, 1);
-  game.renderer.setSize(window.innerWidth, window.innerHeight);
-
-  game.network.hook_receive_message(that.map.chat.receiveMessage);
-
-  game.network.hook_join(this.map.addOtherPlayer);
-  game.network.hook_movement(this.map.updateOtherPlayer);
-  game.network.hook_leave(this.map.deleteOtherPlayer);
-
-  this.map.chat.emitter_send_message = game.network.sendChat;
-
-  this.control = new Control(keyboardBind, this.player.mouseBind);
-
-  this.map.addPlayer(this.player);
-  this.map.load();
-
-  function keyboardBind(key) {
-    if( key ==  'LEFT' && !that.map.hasCollision(that.player.getPosition().x-that.player.velocity, that.player.getPosition().y, 35, 35)) {
-      that.player.moveX(-1);
+    exports.ParallaxElement = ParallaxElement;
+    class Parallax {
+        constructor(map) {
+            this.map = map;
+            this.layers = new Array();
+        }
+        addLayer(layer) {
+            this.layers.push(layer);
+            this.map.game.scene.add(this.layers[this.layers.length - 1].getMesh());
+        }
+        update(delta) {
+            if (!this.layers.length) {
+                return;
+            }
+            let cameraX = this.map.game.camera.position.x;
+            this.layers.forEach(layer => {
+                layer.getMesh().position.x = layer.getStartX() - (cameraX * layer.getDistance());
+            });
+        }
+        remove() {
+            this.layers.forEach(background => {
+                this.map.game.scene.remove(background);
+            });
+        }
     }
-    if(key == 'RIGHT' && !that.map.hasCollision(that.player.getPosition().x+that.player.velocity, that.player.getPosition().y, 35, 35)) {
-      that.player.moveX(1);
+    exports.Parallax = Parallax;
+});
+define("Map", ["require", "exports", "three", "Element"], function (require, exports, THREE, Element_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const RESOURCES_PATH = './resources/';
+    class Map {
+        // private textures: any
+        // private teleports: Array<any>
+        // public parallax: Parallax
+        constructor(game) {
+            this.game = game;
+            this._gravity = 18.0;
+            this._dummyPlayers = new Array();
+            // this.parallax = new Parallax(this);
+            this._name = 'unknow map';
+            this._width = 100;
+            this._height = 100;
+            this._gravity = 18.0;
+        }
+        addPlayer(_player) {
+            this._player = _player;
+        }
+        addDummyPlayer(_dummyPlayer) {
+            this._dummyPlayers[_dummyPlayer.name] = _dummyPlayer;
+        }
+        removeDummyPLayer(_dummyPlayer) {
+            delete this._dummyPlayers[_dummyPlayer.name];
+        }
+        build(_data) {
+            this._name = _data.name;
+            this._width = _data.width;
+            this._height = _data.height;
+            this._collisions = _data.collisions;
+            for (let item of _data.collisions) {
+                let mesh = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), new THREE.MeshBasicMaterial({ transparent: true, color: 0x0f0f0f }));
+                mesh.position.set(item.x, item.y, 2);
+                this.game.scene.add(mesh);
+            }
+            /** ADD Parallax */
+            // let colors = [0x3dc0d3, 0x00ff00, 0x00ffff, 0xffff00]
+            // let v = [0, -0.8, -0.5, 0.1]
+            // let bgs = [3,3,3,3,3,3,3,3,2,1]
+            // for(let i in bgs) {
+            //   let texture = new THREE.TextureLoader().load('resources/parallax/bg_0'+bgs[i]+'.png')
+            //   let mesh = (new THREE.Mesh(
+            //     new THREE.PlaneGeometry(640, 480),
+            //     new THREE.MeshBasicMaterial({map: texture, transparent: true})//, color: colors[i]})
+            //   ));
+            //   mesh.position.x = (bgs[i] == 3 ? 640 * i: 320);
+            //   mesh.position.y = 170;
+            //   mesh.position.z = bgs[i];
+            //   let layer = new ParallaxElement( mesh );
+            //   this.parallax.addLayer(layer);
+            //   console.log('add bg parallax')
+            // }
+            this._elements = _data.elements.map((item) => {
+                let element = new Element_1.Element(this.game);
+                element.loadData(item);
+                this.game.scene.add(element.mesh);
+                return element;
+            });
+            this.showName();
+        }
+        showName() {
+            let name = document.createElement('h1');
+            name.style.color = 'white';
+            name.style.fontFamily = 'Arial';
+            name.style.textShadow = '1px 1px 3px red';
+            name.style.width = '300px';
+            name.style.height = '30px';
+            name.style.position = 'fixed';
+            name.style.top = '5%';
+            name.style.left = '50%';
+            name.style.marginLeft = '-150px';
+            name.textContent = "<< " + this._name + " >>";
+            document.body.appendChild(name);
+            setTimeout(() => {
+                name.style.opacity = '0.7';
+                name.style.opacity = '0.3';
+                name.style.opacity = '0.1';
+                name.remove();
+            }, 3000);
+        }
+        update(_delta) {
+            this._elements.forEach(_element => {
+                _element.update(_delta);
+            });
+            this._dummyPlayers.forEach(_dummyPlayer => {
+                _dummyPlayer.update(_delta);
+            });
+            this.applyPlayerCollision(_delta);
+            // this.parallax.update(_delta)
+        }
+        hasUpCollision(_element, _acceleration, tile, SIZE = 35) {
+            return _element.y + _acceleration.y - _element.height > tile.y;
+        }
+        hasDownCollision(_element, _acceleration, tile, SIZE = 35) {
+            return _element.y + _acceleration.y < tile.y - SIZE;
+        }
+        hasLeftCollision(_element, _acceleration, tile, SIZE = 35) {
+            return _element.x + _acceleration.x + _element.width < tile.x;
+        }
+        hasRightCollision(_element, _acceleration, tile, SIZE = 35) {
+            return _element.x + _acceleration.x > tile.x + SIZE;
+        }
+        hasCollision(_element, _acceleration) {
+            let SIZE = 35;
+            for (let tile of this._collisions) {
+                let up = this.hasUpCollision(_element, _acceleration, tile), down = this.hasDownCollision(_element, _acceleration, tile), left = this.hasLeftCollision(_element, _acceleration, tile), right = this.hasRightCollision(_element, _acceleration, tile);
+                if (!((left || right) || (up || down))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        applyPlayerCollision(_delta) {
+            if (this.hasCollision(this._player, this._player.vectorY)) {
+                this._player.velocityV = -this.gravity * _delta;
+                if (this.game.control.isPressed('SPACE'))
+                    this._player.velocityV = this._player.jumpForce;
+            }
+            else {
+                this._player.velocityV -= this.gravity * _delta;
+            }
+            if (this.game.control.isPressed('LEFT'))
+                this._player.velocityH = this._player.moveLEFT().x;
+            if (this.game.control.isPressed('RIGHT'))
+                this._player.velocityH = this._player.moveRIGHT().x;
+            if (!this.hasCollision(this._player, this._player.vectorY)) {
+                this._player.move('JUMP', this._player.vectorY);
+            }
+            if (!this.hasCollision(this._player, this._player.vectorX)) {
+                this._player.move('MOVE', this._player.vectorX);
+                this._player.velocityH = 0;
+            }
+        }
+        get elements() {
+            return this._elements;
+        }
+        get name() {
+            return this._name;
+        }
+        get gravity() {
+            return this._gravity;
+        }
     }
-    if(key == 'UP' && !that.map.hasCollision(that.player.getPosition().x, that.player.getPosition().y+that.player.velocity, 35, 35)) {
-      that.player.moveY(1);
+    exports.Map = Map;
+});
+define("Scenes/Game", ["require", "exports", "three", "Chat", "Control", "Main", "Map", "Player"], function (require, exports, THREE, Chat_1, Control_1, Main_1, Map_1, Player_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    const RESOURCES_PATH = './resources/';
+    class GameScene {
+        constructor(_main) {
+            this._main = _main;
+            this.clock = new THREE.Clock();
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, 1, 100);
+            this._dummyPlayers = new Array();
+            let that = this;
+            let info = {
+                name: '[ADM] SylvioT',
+                position: { x: 900, y: 320 },
+                velocity: 1.45,
+                level: 1,
+                experience: 1,
+                attributes: {
+                    str: 1,
+                    agi: 1,
+                    vit: 1,
+                    dex: 1,
+                }
+            };
+            let data = {
+                map: {
+                    name: 'Map 1',
+                    width: 100,
+                    height: 100,
+                    materials: [
+                        { name: 'tile_0', sprite: 'tiles/tile_0.png', width: 35, height: 35 },
+                        { name: 'bg_0', sprite: 'backgrounds/bg_0.png', width: 700, height: 200 },
+                        { name: 'bg_hill_0', sprite: 'backgrounds/hill.png', width: 1200, height: 610 },
+                        { name: 'pillar', sprite: 'backgrounds/pillar.png', width: 361, height: 593 },
+                        { name: 'crystal', sprite: 'backgrounds/crystal.png', width: 361, height: 593 },
+                    ],
+                    elements: [
+                        { type: 'tile', material: 'tile_0', x: 0, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 35, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 70, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 105, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 140, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 175, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 210, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 245, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 280, y: 0, z: -1 },
+                        { type: 'tile', material: 'tile_0', x: 315, y: 0, z: -1 },
+                        { type: 'fixed', material: 'pillar', x: 900, y: 169, z: -1 },
+                        { type: 'fixed', material: 'crystal', x: 900, y: 480, z: -1 },
+                        { type: 'background', material: 'bg_0', x: 0, y: -600, z: -3 },
+                        { type: 'background', material: 'bg_0', x: 0, y: 0, z: -3 },
+                        { type: 'background', material: 'bg_0', x: 0, y: 600, z: -3 },
+                        { type: 'background', material: 'bg_0', x: 1200, y: -400, z: -3 },
+                        { type: 'background', material: 'bg_0', x: 1200, y: 200, z: -3 },
+                        { type: 'background', material: 'bg_0', x: 1200, y: 800, z: -3 },
+                        { type: 'background', material: 'bg_hill_0', x: 300, y: 132, z: -2 },
+                        { type: 'background', material: 'bg_hill_0', x: 1500, y: 200, z: -2 },
+                    ],
+                    collisions: [
+                        /* platforms */
+                        { x: 140, y: 140 },
+                        { x: 175, y: 140 },
+                        { x: 210, y: 140 },
+                        { x: 245, y: 140 },
+                        { x: 385, y: 245 },
+                        { x: 420, y: 245 },
+                        { x: 455, y: 245 },
+                        { x: 490, y: 245 },
+                        { x: 630, y: 140 },
+                        { x: 665, y: 140 },
+                        { x: 700, y: 140 },
+                        { x: 735, y: 140 },
+                        { x: 1015, y: 140 },
+                        { x: 1050, y: 140 },
+                        { x: 1085, y: 140 },
+                        { x: 1120, y: 140 },
+                    ]
+                },
+                camera: {
+                    position: { x: 0, y: 0, z: 10 }
+                },
+            };
+            for (let i = 0; i < 10 * 4; i++) {
+                data.map.collisions.push({ x: 35 * i, y: 0 });
+            }
+            for (let i = 0; i < 10; i++) {
+                data.map.collisions.push({ x: 0, y: i * 35 });
+                data.map.collisions.push({ x: 1400, y: i * 35 });
+            }
+            this.resources = new Array();
+            this.chat = new Chat_1.Chat(this);
+            this.control = new Control_1.Control(this);
+            this.player = new Player_1.Player(this);
+            this.player.loadData(info);
+            this._main.network.send({
+                action: 'load_character',
+                character_id: 'Player-' + ~~(Math.random() * 999999)
+            });
+            this._dummyPlayers = [];
+            let addPlayer = data => {
+                let player = this._dummyPlayers[data.nickname] = new Player_1.Player(this);
+                player.loadData({
+                    name: data.nickname,
+                    position: { x: 900, y: 320 }
+                });
+                this.scene.add(player.mesh);
+                this.map.addDummyPlayer(player);
+            };
+            this._main.network.hook('join', data => {
+                let player = this._dummyPlayers[data.nickname] = new Player_1.Player(this);
+                player.loadData({
+                    name: data.nickname,
+                    position: { x: 900, y: 320 }
+                });
+                this.scene.add(player.mesh);
+                this.map.addDummyPlayer(player);
+            });
+            this._main.network.hook('leave', _data => {
+                this.map.removeDummyPLayer(this._dummyPlayers[_data.nickname]);
+                this._dummyPlayers[_data.nickname].remove();
+            });
+            this._main.network.hook('movement', data => {
+                if (!this._dummyPlayers[data.nickname]) {
+                    addPlayer(data);
+                }
+                this._dummyPlayers[data.nickname].updatePosition(data.x, data.y);
+            });
+            data.map.materials.forEach(item => {
+                this.tryLoadTexture(item.name, item.sprite);
+            });
+            this.map = new Map_1.Map(this);
+            this.map.addPlayer(this.player);
+            this.map.build(data.map);
+            this.camera.position.x = data.camera.position.x;
+            this.camera.position.y = data.camera.position.y;
+            this.camera.position.z = data.camera.position.z;
+        }
+        render() {
+        }
+        update() {
+            let delta = this.clock.getDelta();
+            this.map.update(delta);
+            this.player.update(delta);
+            for (let id in this._dummyPlayers) {
+                this._dummyPlayers[id].update(delta);
+            }
+            // ToDo - Camera following IElement
+            this.camera.position.x = Main_1.lerp(this.camera.position.x, this.player.x, 0.07);
+            this.camera.position.y = Main_1.lerp(this.camera.position.y, this.player.y, 0.07);
+            this._main.network.send({
+                action: 'movement',
+                x: this.player.x,
+                y: this.player.y
+            });
+        }
+        down() {
+            console.log('down game');
+        }
+        up() {
+            console.log('up GaME');
+        }
+        /* EVENTS */
+        /* ToDo - need adjust keyboard/mouse event */
+        _mouseEvent(_event) { }
+        /* RESOURCES METHODS */
+        tryLoadTexture(_name, _sprite = '') {
+            if (!this.resources[_name]) {
+                let texture = THREE.ImageUtils.loadTexture(`${RESOURCES_PATH}${_sprite}`);
+                texture.minFilter = THREE.LinearFilter;
+                this.resources[_name] = texture;
+            }
+            return this.resources[_name];
+        }
     }
-    if(key == 'DOWN' && !that.map.hasCollision(that.player.getPosition().x, that.player.getPosition().y-that.player.velocity, 35, 35)) {
-      that.player.moveY(-1);
+    exports.GameScene = GameScene;
+});
+define("UI/Loading", ["require", "exports", "Main"], function (require, exports, Main_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var LoadingStyle;
+    (function (LoadingStyle) {
+        LoadingStyle[LoadingStyle["Defalut"] = 0] = "Defalut";
+        LoadingStyle[LoadingStyle["TopFix"] = 1] = "TopFix";
+    })(LoadingStyle = exports.LoadingStyle || (exports.LoadingStyle = {}));
+    class Loading {
+        constructor(_onDone, _loadingStyle = LoadingStyle.Defalut) {
+            this._onDone = _onDone;
+            this._loadingStyle = _loadingStyle;
+            this._progress = 0;
+            this._bar = document.createElement('div');
+            this._box = document.createElement('div');
+            this._box.appendChild(this._bar);
+            this._bar.style.height = '100%';
+            this._bar.style.width = '0%';
+            this._bar.style.display = 'block';
+            this._bar.style.background = 'linear-gradient(to right, rgba(0,0,255,0.3), rgba(0,0,255,1))';
+            document.body.appendChild(this._box);
+            this.changeStyle(_loadingStyle);
+        }
+        done() {
+            this._onDone();
+        }
+        update() {
+            let currentProgress = parseFloat(this._bar.style.width);
+            this._bar.style.width = Main_2.lerp(currentProgress, this._progress, 0.05) + '%';
+        }
+        remove() {
+            this._bar.remove();
+            this._box.remove();
+        }
+        step(_progress) {
+            this._progress = Math.max(0, Math.min(_progress, 100.0));
+            if (this._progress == 100.0) {
+                this.done();
+            }
+        }
+        changeStyle(_loadingStyle) {
+            this._box.style.display = 'block';
+            this._box.style.position = 'fixed';
+            this._box.style.height = '3.5px';
+            this._box.style.backgroundColor = 'white';
+            if (_loadingStyle == LoadingStyle.Defalut) {
+                this._box.style.width = '300px';
+                this._box.style.top = '70%';
+                this._box.style.left = '50%';
+                this._box.style.marginLeft = '-150px';
+            }
+            else if (_loadingStyle == LoadingStyle.TopFix) {
+                this._box.style.width = '100%';
+                this._box.style.top = '0';
+            }
+        }
     }
-  }
-
-  mouseBind = function(mouse) { }
-
-  var timeToUpdate = 0;
-
-  this.update = function(){
-    that.map.update();
-
-    for(var n in that.players) {
-      that.players[n].update()
+    exports.Loading = Loading;
+});
+define("Scenes/Initialize", ["require", "exports", "three", "Control", "UI/Loading"], function (require, exports, THREE, Control_2, Loading_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class InitializeScene {
+        constructor(_main) {
+            this._main = _main;
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(65, window.devicePixelRatio, 0.1, 2000);
+            this.control = new Control_2.Control(this);
+            this._loader = new THREE.FileLoader();
+            this._loading = new Loading_1.Loading(() => {
+                this._main.next();
+            }, Loading_1.LoadingStyle.Defalut);
+            this._data = [
+                "resources/backgrounds/bg_0.png",
+                "resources/backgrounds/bg_1.png",
+                "resources/backgrounds/cloud.png",
+                "resources/backgrounds/cloud.png",
+            ];
+            this._dataCount = this._data.length;
+            this._dataIndex = 0;
+            let queue_next = () => {
+                THREE.Cache.enabled = true;
+                let _filename = this._data.shift();
+                if (!_filename) {
+                    return;
+                }
+                this._loader.load(_filename, (data) => {
+                    let p = (100 / this._dataCount) * ++this._dataIndex;
+                    this._loading.step(p);
+                    queue_next();
+                }, (_xhr) => {
+                });
+            };
+            this._logo = document.createElement('img');
+            this._logo.src = './resources/logo.png';
+            this._logo.style.position = 'fixed';
+            this._logo.style.top = '10%';
+            this._logo.style.left = '50%';
+            this._logo.style.width = '300px';
+            this._logo.style.height = '300px';
+            this._logo.style.marginLeft = '-150px';
+            document.body.appendChild(this._logo);
+            queue_next();
+        }
+        _mouseEvent(hotkey) { }
+        tryLoadTexture(_name) { }
+        update() {
+            this._loading.update();
+        }
+        render() { }
+        down() {
+            console.log('down initialize');
+            this._loading.remove();
+            this._logo.remove();
+        }
+        up() {
+            console.log('up initialize');
+        }
     }
-
-    if(timeToUpdate > 2) {
-      timeToUpdate = 0;
-      game.network.sendMovement(that.player.position.x, that.player.position.y);
+    exports.InitializeScene = InitializeScene;
+});
+define("Scenes/Login", ["require", "exports", "three", "Control"], function (require, exports, THREE, Control_3) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class LoginScene {
+        constructor(_main) {
+            this._main = _main;
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(65, window.devicePixelRatio, 0.1, 2000);
+            this.control = new Control_3.Control(this);
+            this.login_button = document.createElement('button');
+            this.login_input = document.createElement('input');
+            this.login_label = document.createElement('label');
+            this._logo = document.createElement('img');
+            this._logo = document.createElement('img');
+            this._logo.src = './resources/logo.png';
+            this._logo.style.position = 'fixed';
+            this._logo.style.top = '10%';
+            this._logo.style.left = '25%';
+            this._logo.style.width = '500px';
+            this._logo.style.height = '500px';
+            this._logo.style.marginLeft = '-250px';
+            /* Button */
+            this.login_button.style.position = 'fixed';
+            this.login_button.style.fontSize = '22px';
+            this.login_button.innerHTML = 'Logar';
+            this.login_button.style.top = '60%';
+            this.login_button.style.left = '70%';
+            this.login_button.style.width = '20%';
+            this.login_button.style.marginLeft = '-10%';
+            /* Input */
+            this.login_input.style.position = 'fixed';
+            this.login_input.style.fontSize = '16px';
+            this.login_input.style.textAlign = 'center';
+            this.login_input.focus();
+            this.login_input.style.top = '50%';
+            this.login_input.style.left = '70%';
+            this.login_input.style.width = '20%';
+            this.login_input.style.fontSize = '28px';
+            this.login_input.style.marginLeft = '-10%';
+            /* Texto */
+            this.login_label.style.color = 'white';
+            this.login_label.style.position = 'fixed';
+            this.login_label.style.fontSize = '13px';
+            this.login_label.style.fontFamily = 'monospace';
+            this.login_label.style.textAlign = 'center';
+            // this.login_label.style.backgroundColor = 'red'
+            this.login_label.innerHTML = 'Login or Name';
+            this.login_label.style.top = '40%';
+            this.login_label.style.left = '70%';
+            this.login_label.style.width = '20%';
+            this.login_label.style.marginLeft = '-10%';
+            this._main.network.hook('server-connect', () => {
+                this._main.network.send({
+                    action: 'login_account',
+                    login: 'login',
+                    senha: 'password'
+                });
+            });
+            this._main.network.hook('login_account_success', (_response) => {
+                console.log('connected with success!');
+                document.body.appendChild(this.login_button);
+                document.body.appendChild(this.login_input);
+                document.body.appendChild(this.login_label);
+                document.body.appendChild(this._logo);
+                this.login_input.focus();
+                this.login_button.addEventListener('click', () => {
+                    this._main.next();
+                });
+                this.login_input.addEventListener('keyup', (_event) => {
+                    if (_event.keyCode == 13)
+                        this._main.next();
+                });
+            });
+            this._main.network.connect();
+        }
+        _mouseEvent(hotkey) { }
+        tryLoadTexture(_name) { }
+        update() { }
+        render() { }
+        down() {
+            this.login_button.remove();
+            this.login_input.remove();
+            this.login_label.remove();
+            this._logo.remove();
+            console.log('down login');
+        }
+        up() {
+            console.log('up login');
+        }
     }
-
-    timeToUpdate+=0.4;
-  }
-  this.up = function(){}
-  this.down = function(){}
-}
-
-function Initialize(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(60, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
-
-  this.camera.position.set(0, 0, 700);
-  game.renderer.setClearColor(0x000, 1);
-  game.renderer.setSize(window.innerWidth, window.innerHeight);
-
-  // ToDo - Precisa da lista de arquivos para download...
-  var data = [
-    { filename: 'resources/maps/map_01.json', type: 'json'},
-    { filename: 'resources/player.png'      , type: 'image'},
-  ];
-
-
-  var logo = document.createElement('img');
-  logo.src = 'resources/logo.png';
-  logo.style.position = 'fixed';
-  logo.style.width = '30%';
-  logo.style.top = '10%';
-  logo.style.left = '35%';
-
-  // ToDo - criar um gerador de texto
-  var text_1 = document.createElement('h1');
-  text_1.style.position = 'fixed';
-  text_1.style.color = 'white';
-  text_1.style.bottom = '10%';
-  text_1.style.width = '100%';
-  text_1.style.textAlign = 'center';
-  text_1.innerHTML = 'Carregando...';
-
-  var text = document.createElement('h1');
-  text.style.position = 'fixed';
-  text.style.color = 'white';
-  text.style.bottom = '5%';
-  text.style.width = '100%';
-  text.style.fontSize = '12px';
-  text.style.textAlign = 'center';
-
-  // ToDo - Criar um progress bar
-  var progress = document.createElement('div');
-  progress.style.position = 'fixed';
-  progress.style.height = '20px';
-  progress.style.bottom = '10%';
-  progress.style.width = '40%';
-  progress.style.margin = '0 30%';
-  progress.style.backgroundColor = '#444';
-  progress.style.border = '1px solid white';
-
-  var progress_bar = document.createElement('div');
-  progress_bar.style.height = '100%';
-  progress_bar.style.backgroundColor = 'red';
-  progress_bar.style.width = '0%';
-  progress.appendChild(progress_bar);
-
-  document.body.appendChild(logo);
-  document.body.appendChild(text_1);
-  document.body.appendChild(text);
-  document.body.appendChild(progress);
-
-  function UI_ChangeFilenameRequest(filename) {
-    text.innerHTML = filename;
-  }
-
-  function UI_ChangeProgress(p) {
-    progress_bar.style.width = p+'%';
-  }
-
-  function LoaderFiles(files) {
-    var queue_files = files.slice(),
-        queue_current;
-
-    var queue_finish = function() {
-      sceneManager.next();
-    },
-    queue_next = function() {
-      queue_current = queue_files.shift(); 
-
-      if(!queue_current) { queue_finish(); return; }
-
-      setTimeout(function() {queue_request(queue_current.filename, queue_current.type); }, 1000);
-    },
-    queue_downloading = function(xhr) {
-      console.log( (xhr.loaded / xhr.total * 100) + '% percents.' );
-    },
-    queue_fail = function(xhr) {
-      console.log('fail');
-    },
-    queue_request = function(filename, type) {
-      THREE.Cache.enabled = true;
-      var loader;
-
-      if(type == 'image') 
-        loader = new THREE.ImageLoader();
-      else 
-        loader = new THREE.FileLoader();
-
-      UI_ChangeFilenameRequest(filename);
-      UI_ChangeProgress(parseInt((files.length - queue_files.length) / files.length * 100) );
-
-      loader.load(filename, queue_next, queue_downloading, queue_fail);
+    exports.LoginScene = LoginScene;
+});
+define("Scenes/Splash", ["require", "exports", "three", "Control"], function (require, exports, THREE, Control_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class SplashScene {
+        constructor(_main) {
+            this._main = _main;
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(65, window.devicePixelRatio, 0.1, 2000);
+            this.control = new Control_4.Control(this);
+        }
+        _mouseEvent(hotkey) { this._main.next(); }
+        tryLoadTexture(_name) { }
+        update() { }
+        render() { }
+        down() {
+            console.log('down splash');
+        }
+        up() {
+            console.log('up splash');
+            this._main.next();
+        }
     }
-
-    queue_next();
-  }
-
-  this.up = function() {
-    LoaderFiles(data);
-  }
-
-  this.down = function() {
-    logo.remove();
-    text.remove();
-    text_1.remove();
-    progress.remove();
-  }
-
-  this.update = function(){}
-}
-
-function Login(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
-
-  nickname = 'no-name';
-
-  this.camera.position.set(0, 0, 100);
-  game.renderer.setClearColor(0x000, 1);
-
-  function onTryConnect() {
-    CreateStatus();
-    StatusConnecting();
-
-    game.network.hook_server_connect(onConnect);
-    setTimeout(game.network.connect, 1000);
-  }
-
-  function onConnect() {
-    StatusConnected();
-    CreateForm();
-  }
-
-  function onTryLogin() {
-    game.network.hook_login_account(onLogin, onFailLogin);
-    game.network.loginAccount(nickname, nickname);
-  }
-
-  function onLogin() {
-    game.network.hook_load_character(onLoadCharacter);
-    game.network.loadCharacter(nickname);
-  }
-  
-  function onFailLogin() {
-    StatusFailConnection();
-  }
-
-  function onLoadCharacter() {
-    sceneManager.next();
-  }
-
-  var login = document.createElement('input');
-  var login_text = document.createElement('h1');
-  var login_button = document.createElement('button');
-  var login_status = document.createElement('h1');
-
-  function CreateStatus() {
-    login_status.style.position = 'fixed';
-    login_status.style.top = '50%';
-    login_status.style.width = '100%';
-    login_status.style.fontSize = '15px';
-    login_status.style.textAlign = 'center';
-
-    document.body.appendChild(login_status);
-  }
-
-  function StatusConnecting() {
-    login_status.style.color = 'green';
-    login_status.innerHTML = 'Conectando ao servidor...';
-  }
-
-  function StatusConnected() {
-    login_status.style.color = 'green';
-    login_status.innerHTML = 'Conectado!';
-  }
-
-  function StatusFailConnection() {
-    login_status.style.color = 'red';
-    login_status.innerHTML = 'Sem conexão!';
-  }
-
-  function CreateForm() {
-    login.style.position = 'fixed';
-    login.style.width = '30%';
-    login.style.top = '30%';
-    login.style.left = '35%';
-    login.style.fontSize = '32px';
-    login.style.textAlign = 'center';
-
-    login_text.style.position = 'fixed';
-    login_text.style.width = '30%';
-    login_text.style.top = '20%';
-    login_text.style.left = '35%';
-    login_text.style.textAlign = 'center';
-    login_text.style.color = 'white';
-    login_text.innerHTML = 'Seu nick';
-
-    login_button.style.position = 'fixed';
-    login_button.style.width = '30%';
-    login_button.style.top = '40%';
-    login_button.style.left = '35%';
-    login_button.style.textAlign = 'center';
-    login_button.style.fontSize = '26px';
-    login_button.innerHTML = 'Entrar';
-
-    document.body.appendChild(login);
-    document.body.appendChild(login_text);
-    document.body.appendChild(login_button);
-
-    login_button.addEventListener('click', onSubmit, false);
-    login.addEventListener('keydown', function(e) { if(e.keyCode == 13) { onSubmit(); } }, false);
-
-    function onSubmit(){
-      nickname = login.value;
-      onTryLogin();
+    exports.SplashScene = SplashScene;
+});
+define("Animator", ["require", "exports", "three"], function (require, exports, THREE) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class Animator {
+        constructor(texture, horizontal, vertical, numberOfTiles, displayDuration) {
+            this.currentDisplayTime = 0;
+            this.currentTile = 0;
+            this.displayDuration = displayDuration / 1000;
+            this.horizontal = horizontal;
+            this.numberOfTiles = numberOfTiles;
+            this.texture = texture;
+            this.vertical = vertical;
+            this.texture.wrapS = this.texture.wrapT = THREE.RepeatWrapping;
+            this.texture.repeat.set(1 / this.horizontal, 1 / this.vertical);
+        }
+        update(delta) {
+            this.currentDisplayTime += delta;
+            while (this.currentDisplayTime > this.displayDuration) {
+                this.currentDisplayTime -= this.displayDuration;
+                this.currentTile = (this.currentTile + 1) % this.numberOfTiles;
+                // console.log(this.currentTile, this.displayDuration)
+                this.texture.offset.x = this.currentTile / this.horizontal;
+            }
+        }
     }
-
-    login.focus();
-  }
-
-  this.up = function() {
-    onTryConnect();
-  }
-
-  this.down = function() {
-    login.remove();
-    login_text.remove();
-    login_button.remove();
-    login_status.remove();
-  }
- 
-  this.update = function(){}
-}
-
-function Splash(sceneManager, game) {
-  this.camera = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-  this.scene = new THREE.Scene();
-
-  this.camera.position.set(0, 0, 100);
-  game.renderer.setClearColor(0x0F0, 1);
-
-  this.up = function() {
-    setTimeout(function(){ sceneManager.next(); }, 300);
-  }
-
-  this.down = function() {}
-
-  this.update = function(){}
-}
-
-
-function GameNetwork(options) {
-  var that = this;
-
-  var network = new Network();
-  var urlWS = network.createURL(window.location.protocol, window.location.host)  + '/ws';
-  var callbacks = [];
-
-  this.connect = function() {
-    network.connect(urlWS);
-    network.setCallback(onOpen, onMessage, onClose);
-  }
-
-  /* WEBSOCKET FUNCTION's */
-  function onOpen(response) {
-    invoke('connect', true);
-  }
-  function onError(response) { }
-  function onClose() {
-    console.log("WS - Close");
-    invoke('close', true);
-  }
-  function onMessage(response) {
-    var data = JSON.parse(response.data);
-
-    switch(data.action)
-    {
-      case 'connect': invoke('connect', data); break;
-      case 'disconnect': invoke('disconnect', data); break;
-      case 'login_account_success': invoke('login_success', data); break;
-      case 'login_account_fail': invoke('login_fail', data); break;
-      case 'load_character': invoke('load_character', data); break;
-      case 'join': invoke('join', data); break;
-      case 'leave': invoke('leave', data); break;
-      case 'chat': invoke('receive_message', data); break;
-      case 'movement': invoke('movement', data); break;
+    exports.Animator = Animator;
+});
+define("Scenes/Test", ["require", "exports", "three", "Main", "Control", "Player", "Camera", "Map"], function (require, exports, THREE, Main_3, Control_5, Player_2, Camera_1, Map_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    class TestScene {
+        constructor(_main) {
+            this._main = _main;
+            this.elements = new Array();
+            this.boxs = new Array();
+            this.camera = Camera_1.Camera.OrthographicCamera();
+            this.clock = new THREE.Clock();
+            this.control = new Control_5.Control(this);
+            this.scene = new THREE.Scene();
+            this.map = new Map_2.Map(this);
+            this.player = new Player_2.Player(this);
+            this.player.changeName('[DEV] sylviot');
+            this.player.changePosition({ x: 200, y: 200 });
+            this.player.mesh.position.z = 9;
+            /* MAP DATA */
+            let data = {
+                map: {
+                    name: 'Map 1',
+                    width: 100,
+                    height: 100,
+                    elements: [],
+                    materials: [],
+                    collisions: []
+                }
+            };
+            /* /MAP DATA */
+            for (let i = 0; i < 30 * 4; i++) {
+                data.map.collisions.push({ x: 35 * i, y: 0 });
+            }
+            this.map.addPlayer(this.player);
+            this.map.build(data.map);
+            this.renderer = new THREE.WebGLRenderer({ antialias: true, clearColor: 0x3dc0d3 }); //, preserveDrawingBuffer: true})
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(this.renderer.domElement);
+            this.camera.position.set(0, 0, 10);
+            // var runnerTexture = new THREE.ImageLoader().load('resources/run.png'); 
+            // var runnerTexture = new THREE.ImageUtils.loadTexture( 'resources/run.png' );
+            // this.animator = new Animator( runnerTexture, 10, 1, 10, 75 ); // texture, #horiz, #vert, #total, duration.
+            // var runnerMaterial = new THREE.MeshBasicMaterial( { map: runnerTexture, side: THREE.DoubleSide, transparent: true } );
+            // var runnerGeometry = new THREE.PlaneGeometry(50, 50, 1, 1);
+            // var runner = new THREE.Mesh(runnerGeometry, runnerMaterial);
+            // runner.position.set(200,25,1);
+            // let layer = new ParallaxElement( runner );
+            // this.map.parallax.addLayer(layer);
+            // this.map.game.scene.add(runner);
+        }
+        _mouseEvent(hotkey) { }
+        tryLoadTexture(_name) { }
+        update() {
+            let delta = this.clock.getDelta();
+            this.map.update(delta);
+            this.player.update(delta);
+            // this.animator.update(delta)
+            /** camera */
+            this.camera.position.x = Main_3.lerp(this.camera.position.x, this.player.x, 0.07);
+            this.camera.position.y = Main_3.lerp(this.camera.position.y, this.player.y, 0.07);
+        }
+        render() { }
+        down() {
+            console.log('DOWN');
+        }
+        up() {
+            console.log('UP');
+        }
     }
-  }
-
-  /* HOOK's */
-  this.hook_server_connect = function(callback) {
-    callbacks['connect'] = callback;
-  }
-  this.hook_server_disconnect = function(callback) {
-    callbacks['disconnect'] = callback;
-  }
-  this.hook_login_account = function(callback_success, callback_fail) {
-    callbacks['login_success'] = callback_success;
-    callbacks['login_fail'] = callback_fail;
-  }
-  this.hook_load_character = function(callback) {
-    callbacks['load_character'] = callback;
-  }
-  this.hook_join = function(callback) {
-    callbacks['join'] = callback;
-  }
-  this.hook_leave = function(callback) {
-    callbacks['leave'] = callback;
-  }
-  this.hook_receive_message = function(callback) {
-    callbacks['receive_message'] = callback;
-  }
-  this.hook_movement = function(callback) {
-    callbacks['movement'] = callback;
-  }
-
-  /* FUNCTIONS */
-  this.loginAccount = function(login, senha) {
-    send({action: 'login_account', login: login, senha: senha});
-  }
-  this.loadCharacter = function(character_id) {
-    send({action: 'load_character', character_id: character_id});
-  }
-  this.sendChat = function(message) {
-    send({action: 'chat', message: message});
-  }
-  this.sendMovement = function(x, y) {
-    send({action: 'movement', x: x, y: y})
-  }
-  this.sendBug = function(data, text) {
-    send({action: 'bug', screen: data, text: text})
-  }
-
-  /* INTERNAL FUNCTION */
-  function send(data) {
-    network.send(JSON.stringify(data));
-  }
-  function invoke(callback_name, data) {
-    var f = callbacks[callback_name];
-    !!f && f(data);
-  }
-
-}
-
-function Network() {
-  var websocket;
-
-  this.createURL = function(protocol, host) {
-    protocol = (protocol == 'http:' ? 'ws' : 'wss') + '://';
-    
-    return protocol + host;
-  }
-
-  this.connect = function(url) {
-    if(!websocket || (websocket instanceof WebSocket && websocket.readyState == WebSocket.CLOSED)) {
-      websocket = new WebSocket(url);
+    exports.TestScene = TestScene;
+});
+define("Main", ["require", "exports", "three", "Network", "Scenes/Game", "Scenes/Initialize", "Scenes/Login", "Scenes/Splash", "Scenes/Test"], function (require, exports, THREE, Network_1, Game_1, Initialize_1, Login_1, Splash_1, Test_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    /* ToDo - Função básica para movimentação (move para Helpers) */
+    function lerp(x, y, t) {
+        return (1 - t) * x + t * y;
     }
-  }
-
-  this.setCallback = function(onopen, onmessage, onclose) {
-    websocket.onopen = onopen;
-    websocket.onmessage = onmessage;
-    websocket.onclose = onclose; 
-  }
-
-  this.state = function() {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return null;
+    exports.lerp = lerp;
+    class Main {
+        constructor() {
+            this._network = new Network_1.Network();
+            this._renderer = new THREE.WebGLRenderer({ antialias: true /*, preserveDrawingBuffer: true*/ });
+            this._renderer.setClearColor(0x000, 1);
+            this._renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(this._renderer.domElement);
+            this._scenes = new Array(Initialize_1.InitializeScene, Splash_1.SplashScene, Login_1.LoginScene, Game_1.GameScene, Test_1.TestScene);
+            this._sceneIndex = -1;
+            this.next();
+        }
+        next() {
+            if (this.sceneCurrent) {
+                this.sceneCurrent.down();
+            }
+            let _sceneCount = this._scenes.length;
+            this._sceneIndex = (this._sceneIndex + 1) % _sceneCount;
+            this._sceneCurrent = new this._scenes[this._sceneIndex](this);
+            this.sceneCurrent.up();
+        }
+        run() {
+            let instance = this;
+            var animate = function () {
+                requestAnimationFrame(animate);
+                instance.update();
+                instance.render();
+            };
+            animate();
+        }
+        update() {
+            this.sceneCurrent.update();
+        }
+        render() {
+            this.sceneCurrent.render();
+            this._renderer.render(this.sceneCurrent.scene, this.sceneCurrent.camera);
+        }
+        get network() {
+            return this._network;
+        }
+        get renderer() {
+            return this._renderer;
+        }
+        get sceneCurrent() {
+            return this._sceneCurrent;
+        }
     }
-
-    return websocket.readyState;
-  }
-
-  this.send = function(data) {
-    if(!websocket || !(websocket instanceof WebSocket)) {
-      return;
-    }
-      
-    websocket.send(data);
-  }
-}
-
-(function(){
-var stats = new Stats();
-var clock = new THREE.Clock();
-var renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
-
-renderer.setClearColor(0x000, 1);
-renderer.setSize(window.innerWidth, window.innerHeight);
-
-document.body.appendChild(stats.dom);
-document.body.appendChild(renderer.domElement);
-
-// Basic itens
-var BASIC_CAMERA = new THREE.PerspectiveCamera(75, window.devicePixelRatio, 0.1, 2000);
-
-var network = new GameNetwork();
-var sceneManager = new SceneManager({'renderer': renderer, 'network': network});
-
-function SceneManager(game) {
-  this.scenes = [Initialize, Splash, Login, Game];
-  this.scenesIndex= 0;
-
-  this.initialize = function() {
-    this.next();
-  }
-
-  this.next = function() {
-    var scene = this.scenes[this.scenesIndex++ % this.scenes.length];
-    this.change(scene);
-  }
-    
-  this.change = function(scene) {
-    if(this.current) this.current.down();
-
-    this.current =  new scene(this, game);
-    this.current.up();
-  }
-
-  this.initialize();
-}
-
-function animate(){
-  requestAnimationFrame(animate);
-  render();
-  update();
-}
-
-
-function update(){
-  stats.update();
-  sceneManager.current.update();
-}
-
-function render(){
-  renderer.render(sceneManager.current.scene, sceneManager.current.camera);
-}
-
-animate();
-
-}());
+    exports.Main = Main;
+});
