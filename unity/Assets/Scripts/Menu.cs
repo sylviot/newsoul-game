@@ -3,15 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Menu : MonoBehaviour {
+public class Menu : MonoBehaviour
+{
+    public void Update()
+    {
+        if (Input.anyKeyDown)
+        {
+            Play();
+        }
+    }
 
-	public void MenuOnClick() {
-		Debug.Log("Click");
-	}
-
-	public void Update() {
-		if(Input.GetKeyDown("space")) {
-			SceneManager.LoadScene("Game");
-		}
-	}
+    private void Play()
+    {
+        if (true)//PlayerPrefs.GetInt(TUTORIAL_COMPLETE) == 0)
+        {
+            SceneManager.LoadScene("Tutorial");
+        }
+    }
 }
