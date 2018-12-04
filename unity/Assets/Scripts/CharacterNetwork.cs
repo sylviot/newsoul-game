@@ -18,10 +18,7 @@ public class CharacterNetwork : NetworkBehaviour
 
     [SerializeField]
     private Transform _ceilingCheck;
-
-    [SerializeField]
-    private Camera _camera;
-
+    
     /* Attributes */
     const float _groundedRadius = .2f;
     private Rigidbody2D _rigidbody2D;
@@ -29,7 +26,6 @@ public class CharacterNetwork : NetworkBehaviour
     private void Awake()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
-        _camera = GetComponent<Camera>();
     }
 
     void Update()

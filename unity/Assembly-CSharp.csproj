@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Camera.cs" />
     <Compile Include="Assets\Scripts\CharacterNetwork.cs" />
+    <Compile Include="Assets\Scripts\CommandNetwork.cs" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/sylviot/Code/newsoul-game/unity/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
