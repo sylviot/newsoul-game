@@ -8,6 +8,9 @@ erl_crash.dump
 /node_modules
 *-dev.*
 
+# VisualStudio
+.vs
+
 # Unity gitignore
 [Ll]ibrary/
 [Tt]emp/

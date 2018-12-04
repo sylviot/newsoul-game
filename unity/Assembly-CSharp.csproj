@@ -61,11 +61,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Game\CameraFollow.cs" />
-    <Compile Include="Assets\Scripts\Game\PlayerController.cs" />
-    <Compile Include="Assets\Scripts\Menu.cs" />
-    <Compile Include="Assets\Scripts\Network.cs" />
-    <Compile Include="Assets\Scripts\Tutorial.cs" />
+    <Compile Include="Assets\Scripts\Camera.cs" />
+    <Compile Include="Assets\Scripts\CharacterNetwork.cs" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/sylviot/Code/newsoul-game/unity/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
