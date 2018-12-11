@@ -9,7 +9,7 @@ erl_crash.dump
 *-dev.*
 
 # VisualStudio
-.vs
+.vs/
 
 # Unity gitignore
 [Ll]ibrary/
