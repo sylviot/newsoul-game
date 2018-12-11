@@ -19,7 +19,7 @@ public class ChangeStatus : MonoBehaviour
 
         if (animatorStateInfo.IsName("SplashFadeInFinish"))
         {
-            SceneManager.LoadScene("Game");
+            SceneManager.LoadScene("Login");
         }
     }
 }
