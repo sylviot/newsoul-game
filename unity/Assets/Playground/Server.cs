@@ -11,11 +11,12 @@ public class Server : MonoBehaviour
     void Start()
     {
         network = GetComponent<NetworkManager>();
+        network.StartHost();
     }
 
     // Update is called once per frame
     void Update()
     {
-        network.StartHost();
+
     }
 }
