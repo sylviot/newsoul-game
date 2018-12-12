@@ -64,6 +64,7 @@
     <Compile Include="Assets\ChangeScene.cs" />
     <Compile Include="Assets\ChangeStatus.cs" />
     <Compile Include="Assets\Login.cs" />
+    <Compile Include="Assets\Playground\Server.cs" />
     <Compile Include="Assets\Scripts\Camera.cs" />
     <Compile Include="Assets\Scripts\CharacterNetwork.cs" />
     <Compile Include="Assets\Scripts\CommandNetwork.cs" />
