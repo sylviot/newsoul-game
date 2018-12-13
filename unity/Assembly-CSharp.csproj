@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\Camera2D.cs" />
     <Compile Include="Assets\Scripts\CharacterNetwork.cs" />
     <Compile Include="Assets\Scripts\CommandNetwork.cs" />
+    <Compile Include="Assets\Scripts\Enemy.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
